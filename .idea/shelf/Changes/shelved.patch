@@ -1,0 +1,242 @@
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+new file mode 100644
+--- /dev/null	(date 1701535927640)
++++ b/.idea/vcs.xml	(date 1701535927640)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="$PROJECT_DIR$" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1701535929265)
++++ b/.idea/.gitignore	(date 1701535929265)
+@@ -0,0 +1,8 @@
++# Default ignored files
++/shelf/
++/workspace.xml
++# Editor-based HTTP Client requests
++/httpRequests/
++# Datasource local storage ignored files
++/dataSources/
++/dataSources.local.xml
+Index: .idea/Music player.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/Music player.iml b/.idea/Music player.iml
+new file mode 100644
+--- /dev/null	(date 1701535927607)
++++ b/.idea/Music player.iml	(date 1701535927607)
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<module type="PYTHON_MODULE" version="4">
++  <component name="NewModuleRootManager">
++    <content url="file://$MODULE_DIR$">
++      <excludeFolder url="file://$MODULE_DIR$/venv" />
++    </content>
++    <orderEntry type="inheritedJdk" />
++    <orderEntry type="sourceFolder" forTests="false" />
++  </component>
++</module>
+\ No newline at end of file
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+new file mode 100644
+--- /dev/null	(date 1701535927614)
++++ b/.idea/modules.xml	(date 1701535927614)
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectModuleManager">
++    <modules>
++      <module fileurl="file://$PROJECT_DIR$/.idea/Music player.iml" filepath="$PROJECT_DIR$/.idea/Music player.iml" />
++    </modules>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+new file mode 100644
+--- /dev/null	(date 1701535927625)
++++ b/.idea/misc.xml	(date 1701535927625)
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (Music player)" project-jdk-type="Python SDK" />
++</project>
+\ No newline at end of file
+Index: .idea/inspectionProfiles/profiles_settings.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/inspectionProfiles/profiles_settings.xml b/.idea/inspectionProfiles/profiles_settings.xml
+new file mode 100644
+--- /dev/null	(date 1701535927634)
++++ b/.idea/inspectionProfiles/profiles_settings.xml	(date 1701535927634)
+@@ -0,0 +1,6 @@
++<component name="InspectionProjectProfileManager">
++  <settings>
++    <option name="USE_PROJECT_PROFILE" value="false" />
++    <version value="1.0" />
++  </settings>
++</component>
+\ No newline at end of file
+Index: main.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/main.py b/main.py
+new file mode 100644
+--- /dev/null	(date 1701806747269)
++++ b/main.py	(date 1701806747269)
+@@ -0,0 +1,125 @@
++import sys
++import os
++import subprocess
++from PyQt5.QtWidgets import *
++from PyQt5.QtCore import *
++from PyQt5.QtMultimedia import *
++import datetime
++import shutil
++
++
++def download_audio(youtube_url, output_format='mp3'):
++    for fn in os.listdir("./temp"):
++        os.remove(os.path.join("./temp", fn))
++        print("temp file exists, deleting...")
++    filename_command = f'yt-dlp -x --get-id --audio-format {output_format} {youtube_url} '
++    filename = subprocess.getoutput(filename_command)
++    command = f'yt-dlp -x --audio-format {output_format} {youtube_url} -o {filename}'
++    subprocess.call(command, shell=True)
++    shutil.move(filename + f".{output_format}", os.path.join("./temp/", filename + f".{output_format}"))
++    return os.path.join("./temp/", filename + f".{output_format}")
++
++class MusicPlayer(QMainWindow):
++    def __init__(self):
++        super().__init__()
++
++        self.player = QMediaPlayer()
++        self.initUI()
++
++    def initUI(self):
++        global playing
++        playing = False
++        self.setWindowTitle("YouTube Audio Player")
++        self.setGeometry(300, 300, 300, 150)
++
++        layout = QVBoxLayout()
++        horizontal_button = QHBoxLayout()
++        horizontal_slider = QHBoxLayout()
++
++        centralWidget = QWidget(self)
++        self.setCentralWidget(centralWidget)
++        centralWidget.setLayout(layout)
++
++        self.url_entry = QLineEdit(self)
++        self.url_entry.setPlaceholderText("Enter YouTube URL")
++        layout.addWidget(self.url_entry)
++
++        self.download_play_button = QPushButton("Download and Play", self)
++        self.download_play_button.clicked.connect(self.download_and_play)
++        horizontal_button.addWidget(self.download_play_button)
++
++        self.play_button = QPushButton("pause", self)
++        self.play_button.clicked.connect(self.play_pause)
++        horizontal_button.addWidget(self.play_button)
++
++        self.slider = QSlider(Qt.Horizontal, self)
++        self.slider.setRange(0, 1000)
++        self.slider.sliderMoved.connect(self.set_position)
++        horizontal_slider.addWidget(self.slider)
++
++        self.time_text = QLabel("00:00")
++        horizontal_slider.addWidget(self.time_text)
++
++        self.timer = QTimer(self)
++        self.timer.setInterval(100)
++        self.timer.timeout.connect(self.update_slider)
++
++        layout.addLayout(horizontal_button)
++        layout.addLayout(horizontal_slider)
++
++    def download_and_play(self):
++        global playing
++        if playing:
++            self.play_stop()
++        url = self.url_entry.text()
++        if not url:
++            return
++        audio_file = download_audio(url)
++        playing = True
++        self.play_button.setText("pause")
++        self.play_music(audio_file)
++
++    def play_music(self, file_path):
++        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
++        self.player.play()
++        self.player.setVolume(30)
++        self.timer.start()
++
++    def play_stop(self):
++        global playing
++        if playing:
++            self.player.stop()
++            playing = False
++            self.play_button.setText("play")
++    def play_pause(self):
++        global playing
++        if playing:
++            self.player.pause()
++            self.play_button.setText("play")
++            playing = not playing
++        else:
++            self.player.play()
++            self.play_button.setText("pause")
++            playing = not playing
++    def update_slider(self):
++        duration = self.player.duration()
++        dt = datetime.timedelta(milliseconds=duration/2)
++        disp_duration = "{:0=2}".format(dt.seconds // 60) + ":" + "{:0=2}".format(dt.seconds % 60)
++        if duration > 0:
++            position = self.player.position()
++            self.slider.setValue(int((position / duration) * 1000))
++            st = datetime.timedelta(milliseconds=position/2)
++            disp_runtime = "{:0=2}".format(st.seconds // 60) + ":" + "{:0=2}".format(st.seconds % 60)
++            self.time_text.setText(disp_runtime + " / " + disp_duration)
++
++    def set_position(self, position):
++        duration = self.player.duration()
++        if duration > 0:
++            value = position / 1000 * duration
++            self.player.setPosition(int(value))
++
++if __name__ == '__main__':
++    app = QApplication(sys.argv)
++    ex = MusicPlayer()
++    ex.show()
++    sys.exit(app.exec_())
