@@ -6,7 +6,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
 import datetime
 import shutil
-
+# coding=utf-8
 
 def download_audio(youtube_url, output_format='mp3'):
     for fn in os.listdir("./temp"):
