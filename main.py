@@ -1,3 +1,4 @@
+# coding=utf-8
 import sys
 import os
 import subprocess
@@ -6,18 +7,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
 import datetime
 import shutil
-# coding=utf-8
+import json
 
-def download_audio(youtube_url, output_format='mp3'):
-    for fn in os.listdir("./temp"):
-        os.remove(os.path.join("./temp", fn))
-        print("temp file exists, deleting...")
-    filename_command = f'yt-dlp -x --get-id --audio-format {output_format} {youtube_url} '
-    filename = subprocess.getoutput(filename_command)
-    command = f'yt-dlp -x --audio-format {output_format} {youtube_url} -o {filename}'
-    subprocess.call(command, shell=True)
-    shutil.move(filename + f".{output_format}", os.path.join("./temp/", filename + f".{output_format}"))
-    return os.path.join("./temp/", filename + f".{output_format}")
 
 class MusicPlayer(QMainWindow):
     def __init__(self):
@@ -28,7 +19,11 @@ class MusicPlayer(QMainWindow):
 
     def initUI(self):
         global playing
+        global filename
         playing = False
+        filename = None
+
+
         self.setWindowTitle("YouTube Audio Player")
         self.setGeometry(300, 300, 300, 150)
 
@@ -52,6 +47,10 @@ class MusicPlayer(QMainWindow):
         self.play_button.clicked.connect(self.play_pause)
         horizontal_button.addWidget(self.play_button)
 
+        self.add_playlist = QPushButton("add to playlist", self)
+        self.add_playlist.clicked.connect(self.add_to_playlist)
+        horizontal_button.addWidget(self.add_playlist)
+
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(0, 1000)
         self.slider.sliderMoved.connect(self.set_position)
@@ -67,6 +66,23 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(horizontal_button)
         layout.addLayout(horizontal_slider)
 
+    def download_audio(self, youtube_url, output_format='mp3'):
+        global filename
+        global song_name
+        for fn in os.listdir("./temp"):
+            os.remove(os.path.join("./temp", fn))
+            print("temp file exists, deleting...")
+        filename_command = f'yt-dlp -x --get-id --audio-format {output_format} {youtube_url} '
+        song_name_command = f'yt-dlp -x --print filename --audio-format {output_format} {youtube_url} '
+        filename = subprocess.getoutput(filename_command)
+        print(f"filname: {filename}")
+        song_name = subprocess.getoutput(song_name_command)
+        print(f"songname: {song_name}")
+        command = f'yt-dlp -x --audio-format {output_format} {youtube_url} -o {filename}'
+        subprocess.call(command, shell=True)
+        shutil.move(filename + f".{output_format}", os.path.join("./temp/", filename + f".{output_format}"))
+        return os.path.join("./temp/", filename + f".{output_format}")
+
     def download_and_play(self):
         global playing
         if playing:
@@ -74,7 +90,7 @@ class MusicPlayer(QMainWindow):
         url = self.url_entry.text()
         if not url:
             return
-        audio_file = download_audio(url)
+        audio_file = self.download_audio(url)
         playing = True
         self.play_button.setText("pause")
         self.play_music(audio_file)
@@ -91,6 +107,7 @@ class MusicPlayer(QMainWindow):
             self.player.stop()
             playing = False
             self.play_button.setText("play")
+
     def play_pause(self):
         global playing
         if playing:
@@ -101,14 +118,15 @@ class MusicPlayer(QMainWindow):
             self.player.play()
             self.play_button.setText("pause")
             playing = not playing
+
     def update_slider(self):
         duration = self.player.duration()
-        dt = datetime.timedelta(milliseconds=duration/2)
+        dt = datetime.timedelta(milliseconds=duration / 2)
         disp_duration = "{:0=2}".format(dt.seconds // 60) + ":" + "{:0=2}".format(dt.seconds % 60)
         if duration > 0:
             position = self.player.position()
             self.slider.setValue(int((position / duration) * 1000))
-            st = datetime.timedelta(milliseconds=position/2)
+            st = datetime.timedelta(milliseconds=position / 2)
             disp_runtime = "{:0=2}".format(st.seconds // 60) + ":" + "{:0=2}".format(st.seconds % 60)
             self.time_text.setText(disp_runtime + " / " + disp_duration)
 
@@ -117,6 +135,30 @@ class MusicPlayer(QMainWindow):
         if duration > 0:
             value = position / 1000 * duration
             self.player.setPosition(int(value))
+
+    def add_to_playlist(self):
+        global filename
+        global song_name
+        global added_in_playlist
+
+        if filename is not None:
+            added_in_playlist = False
+            with open('playlist.json', 'r') as f:
+                playlist = json.load(f)
+                for i in playlist["songs"]:
+                    if i["ID"] == filename:
+                        print("already added in playlist")
+                        added_in_playlist = True
+                        break
+                if not added_in_playlist:
+                    print(f"{song_name} is not in playlist, adding...")
+                    playlist["songs"].append({"name": song_name, "ID": filename})
+                    with open('playlist.json', 'w') as f2:
+                        json.dump(playlist, f2)
+                    print(playlist)
+        else:
+            print("nothing for me to add bruh")
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
