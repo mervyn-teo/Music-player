@@ -17,7 +17,7 @@ class MusicPlayer(QMainWindow):
         self.player = QMediaPlayer()
         self.initUI()
 
-    def initUI(self):
+    def initUI(self): # TODO: add another window to display playlist
         global playing
         global filename
         playing = False
@@ -66,7 +66,7 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(horizontal_button)
         layout.addLayout(horizontal_slider)
 
-    def download_audio(self, youtube_url, output_format='mp3'):
+    def download_audio(self, youtube_url, output_format='mp3'): # TODO: separate permanent download and on-the-spot play
         global filename
         global song_name
         for fn in os.listdir("./temp"):
@@ -77,7 +77,7 @@ class MusicPlayer(QMainWindow):
         filename = subprocess.getoutput(filename_command)
         print(f"filname: {filename}")
         song_name = subprocess.getoutput(song_name_command)
-        print(f"songname: {song_name}")
+        print(f"songname: {song_name}") # TODO: make this compatible with non english characters
         command = f'yt-dlp -x --audio-format {output_format} {youtube_url} -o {filename}'
         subprocess.call(command, shell=True)
         shutil.move(filename + f".{output_format}", os.path.join("./temp/", filename + f".{output_format}"))
