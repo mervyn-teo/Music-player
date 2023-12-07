@@ -23,6 +23,10 @@ class MusicPlayer(QMainWindow):
         playing = False
         filename = None
 
+        with open('playlist.json', 'r') as f: # load playlist
+            global playlist
+            playlist = json.load(f)
+
 
         self.setWindowTitle("YouTube Audio Player")
         self.setGeometry(300, 300, 300, 150)
@@ -30,6 +34,7 @@ class MusicPlayer(QMainWindow):
         layout = QVBoxLayout()
         horizontal_button = QHBoxLayout()
         horizontal_slider = QHBoxLayout()
+        playlist_box = QVBoxLayout()
 
         centralWidget = QWidget(self)
         self.setCentralWidget(centralWidget)
@@ -51,6 +56,10 @@ class MusicPlayer(QMainWindow):
         self.add_playlist.clicked.connect(self.add_to_playlist)
         horizontal_button.addWidget(self.add_playlist)
 
+        # self.show_playlist_button = QPushButton("show playlist", self)
+        # self.show_playlist_button.clicked.connect(self.show_playlist)
+        # horizontal_button.addWidget(self.show_playlist_button)
+
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(0, 1000)
         self.slider.sliderMoved.connect(self.set_position)
@@ -58,6 +67,11 @@ class MusicPlayer(QMainWindow):
 
         self.time_text = QLabel("00:00")
         horizontal_slider.addWidget(self.time_text)
+
+        for i in range(len(playlist["songs"])):
+            temp = QLabel(f"{i+1}: {playlist['songs'][i]['name']}")
+            playlist_box.addWidget(temp)
+        layout.addLayout(playlist_box)
 
         self.timer = QTimer(self)
         self.timer.setInterval(100)
@@ -140,24 +154,28 @@ class MusicPlayer(QMainWindow):
         global filename
         global song_name
         global added_in_playlist
+        global playlist
 
         if filename is not None:
             added_in_playlist = False
-            with open('playlist.json', 'r') as f:
-                playlist = json.load(f)
-                for i in playlist["songs"]:
-                    if i["ID"] == filename:
-                        print("already added in playlist")
-                        added_in_playlist = True
-                        break
-                if not added_in_playlist:
-                    print(f"{song_name} is not in playlist, adding...")
-                    playlist["songs"].append({"name": song_name, "ID": filename})
-                    with open('playlist.json', 'w') as f2:
-                        json.dump(playlist, f2)
-                    print(playlist)
+            for i in playlist["songs"]:
+                if i["ID"] == filename:
+                    print("already added in playlist")
+                    added_in_playlist = True
+                    break
+            if not added_in_playlist:
+                print(f"{song_name} is not in playlist, adding...")
+                playlist["songs"].append({"name": song_name, "ID": filename})
+                with open('playlist.json', 'w') as f2:
+                    json.dump(playlist, f2)
+                print(playlist)
         else:
             print("nothing for me to add bruh")
+
+    # def show_playlist(self):
+
+
+
 
 
 if __name__ == '__main__':
