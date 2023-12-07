@@ -2,6 +2,7 @@
 import sys
 import os
 import subprocess
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
@@ -20,11 +21,15 @@ class MusicPlayer(QMainWindow):
     def initUI(self): # TODO: add another window to display playlist
         global playing
         global filename
+        global playlist_box
+        global playlist
+        global playlist_shown
+
+        playlist_shown = False
         playing = False
         filename = None
 
         with open('playlist.json', 'r') as f: # load playlist
-            global playlist
             playlist = json.load(f)
 
 
@@ -34,6 +39,7 @@ class MusicPlayer(QMainWindow):
         layout = QVBoxLayout()
         horizontal_button = QHBoxLayout()
         horizontal_slider = QHBoxLayout()
+
         playlist_box = QVBoxLayout()
 
         centralWidget = QWidget(self)
@@ -56,9 +62,9 @@ class MusicPlayer(QMainWindow):
         self.add_playlist.clicked.connect(self.add_to_playlist)
         horizontal_button.addWidget(self.add_playlist)
 
-        # self.show_playlist_button = QPushButton("show playlist", self)
-        # self.show_playlist_button.clicked.connect(self.show_playlist)
-        # horizontal_button.addWidget(self.show_playlist_button)
+        self.show_playlist_button = QPushButton("show playlist", self)
+        self.show_playlist_button.clicked.connect(self.show_playlist)
+        horizontal_button.addWidget(self.show_playlist_button)
 
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(0, 1000)
@@ -70,6 +76,7 @@ class MusicPlayer(QMainWindow):
 
         for i in range(len(playlist["songs"])):
             temp = QLabel(f"{i+1}: {playlist['songs'][i]['name']}")
+            temp.setVisible(False)
             playlist_box.addWidget(temp)
         layout.addLayout(playlist_box)
 
@@ -172,7 +179,20 @@ class MusicPlayer(QMainWindow):
         else:
             print("nothing for me to add bruh")
 
-    # def show_playlist(self):
+
+    def show_playlist(self):
+        global playlist_box
+        global playlist_shown
+        index = playlist_box.count()
+        while (index > 0):
+            my_widget = playlist_box.itemAt(index-1).widget()
+            my_widget.setVisible(not playlist_shown)
+            index -= 1
+        playlist_shown = not playlist_shown
+        if playlist_shown:
+            self.show_playlist_button.setText('Hide playlist')
+        else:
+            self.show_playlist_button.setText('Show playlist')
 
 
 
