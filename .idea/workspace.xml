@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="fixed utf-8 issue">
+    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="style changes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/playlist.json" beforeDir="false" afterPath="$PROJECT_DIR$/playlist.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,7 +92,9 @@
       <workItem from="1701807139348" duration="300000" />
       <workItem from="1701876237302" duration="6535000" />
       <workItem from="1701949727014" duration="14622000" />
-      <workItem from="1701978832551" duration="6668000" />
+      <workItem from="1701978832551" duration="6890000" />
+      <workItem from="1701985907443" duration="120000" />
+      <workItem from="1702049000390" duration="7005000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -159,7 +160,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701969651683</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="style changes">
+      <option name="closed" value="true" />
+      <created>1701985802326</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1701985802326</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -197,9 +206,10 @@
     <MESSAGE value="made a simple playlist display, made playlist global" />
     <MESSAGE value="implement playlists hide/show" />
     <MESSAGE value="fixed utf-8 issue" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed utf-8 issue" />
+    <MESSAGE value="style changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="style changes" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1701985429186" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702072120672" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

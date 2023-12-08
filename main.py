@@ -19,6 +19,8 @@ class MusicPlayer(QMainWindow):
         self.playlist_shown = False
         self.playing = False
         self.filename = None
+        self.queue = []
+        self.now_playing_num = 0
 
         #style sheets
         self.text_style = "color: white;"
@@ -29,23 +31,23 @@ class MusicPlayer(QMainWindow):
                 padding:10px;\
                 border-radius: 5px;\
             }\
-            QPushButton::pressed{\
+            QPushButton:pressed{\
                 background-color: #59beba;\
             }\
-            QPushButton:hover{\
+            QPushButton:hover:!pressed{\
                 background-color: #6feee9;\
                 color: #214746;\
             }"
         self.play_style = "QPushButton{\
-                background-color : #a1d664;\
+                background-color: #a1d664;\
                 color: black;\
                 padding:10px;\
                 border-radius: 5px;\
             }\
-            QPushButton::pressed{\
+            QPushButton:pressed{ \
                 background-color: #8fbe59;\
             }\
-            QPushButton:hover{\
+            QPushButton:hover:!pressed{\
                 background-color: #b3ee6f;\
                 color: #364721;\
             }"
@@ -55,10 +57,10 @@ class MusicPlayer(QMainWindow):
                 padding:10px;\
                 border-radius: 5px;\
             }\
-            QPushButton::pressed{\
+            QPushButton:pressed{\
                 background-color: #be595d;\
             }\
-            QPushButton:hover{\
+            QPushButton:hover:!pressed{\
                 background-color: #ee6f74;\
                 color: #472123;\
             }"
@@ -68,10 +70,10 @@ class MusicPlayer(QMainWindow):
                 padding:10px;\
                 border-radius: 5px;\
             }\
-            QPushButton::pressed{\
+            QPushButton:pressed{\
                 background-color: #59beba;\
             }\
-            QPushButton:hover{\
+            QPushButton:hover:!pressed{\
                 background-color: #59beba;\
                 color: #214746;\
             }"
@@ -109,6 +111,7 @@ class MusicPlayer(QMainWindow):
         horizontal_button = QHBoxLayout()
         horizontal_slider = QHBoxLayout()
         self.playlist_box = QVBoxLayout()
+        self.queue_box = QVBoxLayout()
 
         # overall layout
         centralWidget = QWidget(self)
@@ -134,16 +137,22 @@ class MusicPlayer(QMainWindow):
         horizontal_button.addWidget(self.play_button)
 
         # add playlist button
-        self.add_playlist = QPushButton("add to playlist", self)
-        self.add_playlist.setStyleSheet(self.normal_button_style)
-        self.add_playlist.clicked.connect(self.add_to_playlist)
-        horizontal_button.addWidget(self.add_playlist)
+        self.add_playlist_button = QPushButton("add to playlist", self)
+        self.add_playlist_button.setStyleSheet(self.normal_button_style)
+        self.add_playlist_button.clicked.connect(self.add_to_playlist)
+        horizontal_button.addWidget(self.add_playlist_button)
 
         # show/hide play button
         self.show_playlist_button = QPushButton("show playlist", self)
         self.show_playlist_button.setStyleSheet(self.normal_button_style)
         self.show_playlist_button.clicked.connect(self.show_playlist)
         horizontal_button.addWidget(self.show_playlist_button)
+
+        # add song to queue
+        self.add_url_to_queue_button = QPushButton("add to queue", self)
+        self.add_url_to_queue_button.setStyleSheet(self.normal_button_style)
+        self.add_url_to_queue_button.clicked.connect(self.add_url_to_queue)
+        horizontal_button.addWidget(self.add_url_to_queue_button)
 
         # slider
         self.slider = QSlider(Qt.Horizontal, self)
@@ -154,6 +163,12 @@ class MusicPlayer(QMainWindow):
         self.time_text = QLabel("00:00 / 00:00")
         self.time_text.setStyleSheet(self.text_style)
         horizontal_slider.addWidget(self.time_text)
+
+        # play queue
+        self.queue_label = QLabel("Song queue:")
+        self.queue_label.setStyleSheet(self.text_style)
+        self.queue_box.addWidget(self.queue_label)
+        layout.addLayout(self.queue_box)
 
         # initialise playlists
         for i in range(len(self.playlist["songs"])):
@@ -171,7 +186,7 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(horizontal_slider)
 
     def download_audio(self, youtube_url, output_format='mp3'): # TODO: separate permanent download and on-the-spot play
-        # remove subfixes
+        # remove suffixes
         if youtube_url.find('&') >= 0:
             youtube_url = youtube_url[:youtube_url.index('&')]
         print(youtube_url)
@@ -192,7 +207,6 @@ class MusicPlayer(QMainWindow):
 
         command = f"yt-dlp -x --audio-format {output_format} {youtube_url} -o {self.filename}"
         subprocess.call(command, shell=True)
-        print("here")
         shutil.move(self.filename + f".{output_format}", os.path.join("./temp/", self.filename + f".{output_format}"))
         return os.path.join("./temp/", self.filename + f".{output_format}")
 
@@ -206,6 +220,22 @@ class MusicPlayer(QMainWindow):
         self.playing = True
         self.play_button.setText("pause")
         self.play_music(audio_file)
+        self.queue.insert(0,{"name":f"{self.song_name}", "ID":f"{self.filename}"})
+        self.refresh_queue()
+
+
+    def refresh_queue(self):
+        r = self.queue_box.count()
+        if r > 0:
+            for i in range(r):
+                temp = self.queue_box.itemAt(i).widget()
+                if temp != self.queue_label:
+                    print(i)
+                    self.queue_box.removeWidget(temp)
+        for i in range(len(self.queue)):
+            self.queue_box.addWidget(QLabel(f"{i + 1}: {self.queue[i]['name']}"))
+            self.queue_box.itemAt(i+1).widget().setStyleSheet(self.text_style)
+
 
     def play_music(self, file_path):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
@@ -231,6 +261,10 @@ class MusicPlayer(QMainWindow):
             self.playing = not self.playing
             self.play_button.setStyleSheet(self.pause_style)
 
+
+    def add_url_to_queue(self): # TODO: make this
+        return
+
     def update_slider(self):
         duration = self.player.duration()
         dt = datetime.timedelta(milliseconds=duration / 2)
@@ -241,6 +275,11 @@ class MusicPlayer(QMainWindow):
             st = datetime.timedelta(milliseconds=position / 2)
             disp_runtime = "{:0=2}".format(st.seconds // 60) + ":" + "{:0=2}".format(st.seconds % 60)
             self.time_text.setText(disp_runtime + " / " + disp_duration)
+            if position == duration:
+                self.next_song
+
+    def next_song(self): # TODO: make this
+        return
 
     def set_position(self, position):
         duration = self.player.duration()
