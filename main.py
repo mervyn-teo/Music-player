@@ -4,6 +4,10 @@ import subprocess
 import datetime
 import shutil
 import json
+import yt_dlp
+
+# TODO: import instead of using command lines https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
