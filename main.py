@@ -15,7 +15,14 @@ from PyQt5.QtMultimedia import *
 class MusicPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        if not os.path.exists("temp"):
+            os.makedirs("temp")
+            print("found no temp folder, creating...")
+        if not os.path.exists("playlist.json"):
+            open("playlist.json", "x")
+            print("found no playlist, creating...")
+            with open("playlist.json", "w") as temp:
+                json.dump({"songs": []}, temp)
         self.player = QMediaPlayer()
         self.initUI()
 
@@ -102,7 +109,7 @@ class MusicPlayer(QMainWindow):
                             }"
 
         # load playlist
-        with open('playlist.json', 'r') as f:
+        with open('playlist.json', 'r', encoding='utf-8') as f:
             self.playlist = json.load(f)
 
         # Set window title
@@ -181,11 +188,16 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(self.queue_box)
 
         # initialise playlists
-        for i in range(len(self.playlist["songs"])):
-            temp = QLabel(f"{i + 1}: {self.playlist['songs'][i]['name']}")
-            temp.setVisible(False)
-            temp.setStyleSheet(self.text_style)
-            self.playlist_box.addWidget(temp)
+        t = QLabel("playlist:")
+        t.setStyleSheet(self.text_style)
+        t.setVisible(False)
+        self.playlist_box.addWidget(t)
+        if len(self.playlist["songs"]) > 0:
+            for i in range(len(self.playlist["songs"])):
+                temp = QLabel(f"{i + 1}: {self.playlist['songs'][i]['name']}")
+                temp.setVisible(False)
+                temp.setStyleSheet(self.text_style)
+                self.playlist_box.addWidget(temp)
         layout.addLayout(self.playlist_box)
 
         self.timer = QTimer(self)
