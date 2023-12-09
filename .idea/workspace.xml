@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="style changes">
+    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="added autoplay for queues&#10;made 'add to queue' funtion work">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -94,7 +94,8 @@
       <workItem from="1701949727014" duration="14622000" />
       <workItem from="1701978832551" duration="6890000" />
       <workItem from="1701985907443" duration="120000" />
-      <workItem from="1702049000390" duration="7005000" />
+      <workItem from="1702049000390" duration="7766000" />
+      <workItem from="1702082597611" duration="4376000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -168,7 +169,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701985802326</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="added song queue, did not finish">
+      <option name="closed" value="true" />
+      <created>1702072603011</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1702072603011</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -207,9 +216,11 @@
     <MESSAGE value="implement playlists hide/show" />
     <MESSAGE value="fixed utf-8 issue" />
     <MESSAGE value="style changes" />
-    <option name="LAST_COMMIT_MESSAGE" value="style changes" />
+    <MESSAGE value="added song queue, did not finish" />
+    <MESSAGE value="added autoplay for queues&#10;made 'add to queue' funtion work" />
+    <option name="LAST_COMMIT_MESSAGE" value="added autoplay for queues&#10;made 'add to queue' funtion work" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702072120672" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702086536719" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

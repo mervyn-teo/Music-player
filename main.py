@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
 
+
 class MusicPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -22,8 +23,9 @@ class MusicPlayer(QMainWindow):
         self.queue = []
         self.now_playing_num = 0
 
-        #style sheets
+        # style sheets
         self.text_style = "color: white;"
+        self.highlight_text_style = "color: orange;"
         self.window_style = "background-color: #252729;"
         self.normal_button_style = "QPushButton{\
                 background-color : #64d6d2;\
@@ -96,7 +98,6 @@ class MusicPlayer(QMainWindow):
                                 border-radius: 4px;\
                             }"
 
-
         # load playlist
         with open('playlist.json', 'r') as f:
             self.playlist = json.load(f)
@@ -136,6 +137,12 @@ class MusicPlayer(QMainWindow):
         self.play_button.clicked.connect(self.play_pause)
         horizontal_button.addWidget(self.play_button)
 
+        # next song button
+        self.next_song_button = QPushButton("next",self)
+        self.next_song_button.setStyleSheet(self.normal_button_style)
+        self.next_song_button.clicked.connect(self.next_song)
+        horizontal_button.addWidget(self.next_song_button)
+
         # add playlist button
         self.add_playlist_button = QPushButton("add to playlist", self)
         self.add_playlist_button.setStyleSheet(self.normal_button_style)
@@ -172,7 +179,7 @@ class MusicPlayer(QMainWindow):
 
         # initialise playlists
         for i in range(len(self.playlist["songs"])):
-            temp = QLabel(f"{i+1}: {self.playlist['songs'][i]['name']}")
+            temp = QLabel(f"{i + 1}: {self.playlist['songs'][i]['name']}")
             temp.setVisible(False)
             temp.setStyleSheet(self.text_style)
             self.playlist_box.addWidget(temp)
@@ -185,7 +192,23 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(horizontal_button)
         layout.addLayout(horizontal_slider)
 
-    def download_audio(self, youtube_url, output_format='mp3'): # TODO: separate permanent download and on-the-spot play
+    def get_song_name(self, youtube_url, output_format="mp3"):
+        get_name = subprocess.Popen(
+            ['yt-dlp', '-x', '--print', 'filename', 'audio-format', output_format, youtube_url], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        songname_out, songname_err = get_name.communicate()
+        song_name = songname_out.decode('utf-8').strip()
+        return song_name
+
+    def get_file_name(self, youtube_url, output_format="mp3"):
+        filename = subprocess.Popen(['yt-dlp', '-x', '--get-id', 'audio-format', output_format, youtube_url],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        filename_out, filename_err = filename.communicate()
+        filename = filename_out.decode('utf-8').strip()
+        return filename
+
+    def download_audio(self, youtube_url,
+                       output_format='mp3'):  # TODO: separate permanent download and on-the-spot play
         # remove suffixes
         if youtube_url.find('&') >= 0:
             youtube_url = youtube_url[:youtube_url.index('&')]
@@ -195,14 +218,9 @@ class MusicPlayer(QMainWindow):
             os.remove(os.path.join("./temp", fn))
             print("temp file exists, deleting...")
 
-        self.filename = subprocess.Popen(['yt-dlp', '-x', '--get-id', 'audio-format', output_format, youtube_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        filename_out, filename_err = self.filename.communicate()
-        self.filename = filename_out.decode('utf-8').strip()
+        self.filename = self.get_file_name(youtube_url)
+        self.song_name = self.get_song_name(youtube_url)
         print(f"file name: {self.filename}")
-
-        self.song_name = subprocess.Popen(['yt-dlp', '-x', '--print', 'filename', 'audio-format', output_format, youtube_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        songname_out, songname_err = self.song_name.communicate()
-        self.song_name = songname_out.decode('utf-8').strip()
         print(f"song name: {self.song_name}")
 
         command = f"yt-dlp -x --audio-format {output_format} {youtube_url} -o {self.filename}"
@@ -220,22 +238,23 @@ class MusicPlayer(QMainWindow):
         self.playing = True
         self.play_button.setText("pause")
         self.play_music(audio_file)
-        self.queue.insert(0,{"name":f"{self.song_name}", "ID":f"{self.filename}"})
+        self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
         self.refresh_queue()
-
 
     def refresh_queue(self):
         r = self.queue_box.count()
         if r > 0:
-            for i in range(r):
+            for i in reversed(range(r)):
                 temp = self.queue_box.itemAt(i).widget()
                 if temp != self.queue_label:
                     print(i)
                     self.queue_box.removeWidget(temp)
         for i in range(len(self.queue)):
             self.queue_box.addWidget(QLabel(f"{i + 1}: {self.queue[i]['name']}"))
-            self.queue_box.itemAt(i+1).widget().setStyleSheet(self.text_style)
-
+            if i == 0:
+                self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.highlight_text_style)
+            else:
+                self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.text_style)
 
     def play_music(self, file_path):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
@@ -255,15 +274,25 @@ class MusicPlayer(QMainWindow):
             self.play_button.setText("play")
             self.playing = not self.playing
             self.play_button.setStyleSheet(self.play_style)
-        else:
-            self.player.play()
-            self.play_button.setText("pause")
-            self.playing = not self.playing
-            self.play_button.setStyleSheet(self.pause_style)
+        elif len(self.queue) > 0:
 
+            if self.player.state() == 0:
+                audio_file = self.download_audio(self.queue[0]["ID"])
+                self.playing = True
+                self.play_button.setText("pause")
+                self.play_music(audio_file)
+                print(f"queue dict: {self.queue}")
+                self.refresh_queue()
+            else:
+                self.player.play()
+                self.play_button.setText("pause")
+                self.playing = not self.playing
+                self.play_button.setStyleSheet(self.pause_style)
 
-    def add_url_to_queue(self): # TODO: make this
-        return
+    def add_url_to_queue(self):
+        self.queue.append(
+            {"name": self.get_song_name(self.url_entry.text()), "ID": self.get_file_name(self.url_entry.text())})
+        self.refresh_queue()
 
     def update_slider(self):
         duration = self.player.duration()
@@ -275,11 +304,20 @@ class MusicPlayer(QMainWindow):
             st = datetime.timedelta(milliseconds=position / 2)
             disp_runtime = "{:0=2}".format(st.seconds // 60) + ":" + "{:0=2}".format(st.seconds % 60)
             self.time_text.setText(disp_runtime + " / " + disp_duration)
-            if position == duration:
-                self.next_song
+            if position == duration:  # goto next song after all is played
+                self.next_song()
 
-    def next_song(self): # TODO: make this
-        return
+    def next_song(self):
+        if self.player.state() != 0:
+            self.player.stop()
+        if len(self.queue) > 0:
+            del self.queue[0]
+            audio_file = self.download_audio(self.queue[0]["ID"])
+            self.playing = True
+            self.play_button.setText("pause")
+            self.play_music(audio_file)
+            print(f"queue dict: {self.queue}")
+        self.refresh_queue()
 
     def set_position(self, position):
         duration = self.player.duration()
@@ -287,9 +325,8 @@ class MusicPlayer(QMainWindow):
             value = position / 1000 * duration
             self.player.setPosition(int(value))
 
-    def add_to_playlist(self):
+    def add_to_playlist(self):  # TODO: fix this global variable
         global added_in_playlist
-
         if self.filename is not None:
             added_in_playlist = False
             for i in self.playlist["songs"]:
@@ -300,7 +337,7 @@ class MusicPlayer(QMainWindow):
             if not added_in_playlist:
                 print(f"{self.song_name} is not in playlist, adding...")
                 self.playlist["songs"].append({"name": self.song_name, "ID": self.filename})
-                temp = QLabel(f"{self.playlist_box.count()+1}: {self.song_name}")
+                temp = QLabel(f"{self.playlist_box.count() + 1}: {self.song_name}")
                 self.playlist_box.addWidget(temp)
                 temp.setStyleSheet(self.text_style)
                 with open('playlist.json', 'w') as f2:
@@ -309,11 +346,10 @@ class MusicPlayer(QMainWindow):
         else:
             print("nothing for me to add bruh")
 
-
     def show_playlist(self):
         index = self.playlist_box.count()
         while (index > 0):
-            my_widget = self.playlist_box.itemAt(index-1).widget()
+            my_widget = self.playlist_box.itemAt(index - 1).widget()
             my_widget.setVisible(not self.playlist_shown)
             index -= 1
         self.playlist_shown = not self.playlist_shown
@@ -323,9 +359,6 @@ class MusicPlayer(QMainWindow):
         else:
             self.show_playlist_button.setText('Show playlist')
             self.show_playlist_button.setStyleSheet(self.normal_button_style)
-
-
-
 
 
 if __name__ == '__main__':
