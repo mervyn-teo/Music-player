@@ -1,10 +1,9 @@
 import sys
 import os
-import subprocess
 import datetime
 import shutil
 import json
-import yt_dlp
+from yt_dlp import YoutubeDL
 
 # TODO: import instead of using command lines https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
 
@@ -142,7 +141,7 @@ class MusicPlayer(QMainWindow):
         horizontal_button.addWidget(self.play_button)
 
         # next song button
-        self.next_song_button = QPushButton("next",self)
+        self.next_song_button = QPushButton("next", self)
         self.next_song_button.setStyleSheet(self.normal_button_style)
         self.next_song_button.clicked.connect(self.next_song)
         horizontal_button.addWidget(self.next_song_button)
@@ -196,20 +195,15 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(horizontal_button)
         layout.addLayout(horizontal_slider)
 
-    def get_song_name(self, youtube_url, output_format="mp3"):
-        get_name = subprocess.Popen(
-            ['yt-dlp', '-x', '--print', 'filename', 'audio-format', output_format, youtube_url], stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        songname_out, songname_err = get_name.communicate()
-        song_name = songname_out.decode('utf-8').strip()
-        return song_name
-
-    def get_file_name(self, youtube_url, output_format="mp3"):
-        filename = subprocess.Popen(['yt-dlp', '-x', '--get-id', 'audio-format', output_format, youtube_url],
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        filename_out, filename_err = filename.communicate()
-        filename = filename_out.decode('utf-8').strip()
-        return filename
+    def get_song_file_name(self, youtube_url, output_format="mp3"):
+        youtube_dl_opts = {}
+        with YoutubeDL(youtube_dl_opts) as ydl:
+            info_dict = ydl.extract_info(youtube_url, download=False)
+            ext = info_dict.get("ext", None)
+            filename = info_dict.get("id", None)
+            song_name = info_dict.get('title', None)
+            print(filename)
+            return song_name, filename, ext
 
     def download_audio(self, youtube_url,
                        output_format='mp3'):  # TODO: separate permanent download and on-the-spot play
@@ -221,16 +215,23 @@ class MusicPlayer(QMainWindow):
         for fn in os.listdir("./temp"):
             os.remove(os.path.join("./temp", fn))
             print("temp file exists, deleting...")
+        print("this is me")
+        res = self.get_song_file_name(youtube_url)
 
-        self.filename = self.get_file_name(youtube_url)
-        self.song_name = self.get_song_name(youtube_url)
+        self.song_name = res[0]
+        self.filename = res[1]
+        self.ext = res[2]
         print(f"file name: {self.filename}")
         print(f"song name: {self.song_name}")
 
-        command = f"yt-dlp -x --audio-format {output_format} {youtube_url} -o {self.filename}"
-        subprocess.call(command, shell=True)
-        shutil.move(self.filename + f".{output_format}", os.path.join("./temp/", self.filename + f".{output_format}"))
-        return os.path.join("./temp/", self.filename + f".{output_format}")
+        ydl_opts = {'outtmpl': f'{self.filename}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp3'
+        }]}
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download(youtube_url)
+        shutil.move(self.filename + ".mp3", os.path.join("./temp/", self.filename + ".mp3"))
+        return os.path.join("./temp/", self.filename + ".mp3")
 
     def download_and_play(self):
         if self.playing:
@@ -294,8 +295,9 @@ class MusicPlayer(QMainWindow):
                 self.play_button.setStyleSheet(self.pause_style)
 
     def add_url_to_queue(self):
+        res = self.get_song_file_name(self.url_entry.text())
         self.queue.append(
-            {"name": self.get_song_name(self.url_entry.text()), "ID": self.get_file_name(self.url_entry.text())})
+            {"name": res[0], "ID": res[1]})
         self.refresh_queue()
 
     def update_slider(self):
