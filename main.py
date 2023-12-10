@@ -106,15 +106,31 @@ class MusicPlayer(QMainWindow):
                                 margin: -4px -1px; \
                                 border-radius: 4px;\
                             }"
+        self.volume_slider_style = "QSlider::groove:horizontal {\
+                                        border: 1px solid #999999;\
+                                        height: 1px; \
+                                        width:100px;\
+                                        background: #B1B1B1;\
+                                    }\
+                                    QSlider::handle:horizontal {\
+                                        background: #a1d664;\
+                                        border: 1px solid #5c5c5c;\
+                                        width: 8px;\
+                                        margin: -4px 8px; \
+                                        border-radius: 4px;\
+                                    }"
         self.timer = QTimer(self)
 
         # load playlist
         with open('playlist.json', 'r', encoding='utf-8') as f:
             self.playlist = json.load(f)
 
-        # Set window title
+        # Window
         self.setWindowTitle("YouTube Audio Player")
         self.setStyleSheet(self.window_style)
+
+        self.setWindowOpacity(0.95)
+
         # self.setGeometry(300, 300, 300, 150)
 
         # layouts
@@ -171,15 +187,11 @@ class MusicPlayer(QMainWindow):
         self.add_url_to_queue_button.clicked.connect(self.add_url_to_queue)
         horizontal_button.addWidget(self.add_url_to_queue_button)
 
-        # slider
-        self.slider = QSlider(Qt.Horizontal, self)
-        self.slider.setRange(0, 1000)
-        self.slider.setStyleSheet(self.slider_style)
-        self.slider.sliderMoved.connect(self.set_position)
-        horizontal_slider.addWidget(self.slider)
-        self.time_text = QLabel("00:00 / 00:00")
-        self.time_text.setStyleSheet(self.text_style)
-        horizontal_slider.addWidget(self.time_text)
+        # add playlist to song
+        self.add_playlist_to_queue_button = QPushButton("add playlist to queue", self)
+        self.add_playlist_to_queue_button.setStyleSheet(self.normal_button_style)
+        self.add_playlist_to_queue_button.clicked.connect(self.add_playlist_to_queue)
+        horizontal_button.addWidget(self.add_playlist_to_queue_button)
 
         # play queue
         self.queue_label = QLabel("Song queue:")
@@ -207,7 +219,36 @@ class MusicPlayer(QMainWindow):
         self.timer.timeout.connect(self.update_slider)
 
         layout.addLayout(horizontal_button)
+
+        # slider
+        self.slider = QSlider(Qt.Horizontal, self)
+        self.slider.setRange(0, 1000)
+        self.slider.setStyleSheet(self.slider_style)
+        self.slider.sliderMoved.connect(self.set_position)
+        horizontal_slider.addWidget(self.slider, Qt.AlignLeft)
+
+        self.time_text = QLabel("00:00 / 00:00")
+        self.time_text.setStyleSheet(self.text_style)
+        horizontal_slider.addWidget(self.time_text)
+
         layout.addLayout(horizontal_slider)
+
+        # volume
+        self.volume_slider = QSlider(Qt.Horizontal, self)
+        self.volume_slider.setRange(0,100)
+        self.volume_slider.setStyleSheet(self.volume_slider_style)
+        self.volume_slider.sliderMoved.connect(self.volume_adjust)
+
+        self.volume_text = QLabel('Volume:')
+        self.volume_text.setStyleSheet(self.text_style)
+        horizontal_slider.addWidget(self.volume_text)
+        horizontal_slider.addWidget(self.volume_slider)
+
+
+    def volume_adjust(self):
+        self.volume = self.volume_slider.sliderPosition()
+        self.player.setVolume(self.volume)
+
 
     def play_from_playlist(self, ID):
         def ret_func():
@@ -288,7 +329,9 @@ class MusicPlayer(QMainWindow):
     def play_music(self, file_path):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
         self.player.play()
-        self.player.setVolume(30)
+        self.volume = 30
+        self.player.setVolume(self.volume)
+        self.volume_slider.setSliderPosition(self.volume)
         self.playing = True
         self.setWindowTitle(f"Now playing: {self.song_name}")
         self.timer.start()
@@ -318,12 +361,17 @@ class MusicPlayer(QMainWindow):
                 self.play_button.setText("pause")
                 self.playing = not self.playing
                 self.play_button.setStyleSheet(self.pause_style)
+    def add_playlist_to_queue(self):
+        print(self.playlist['songs'])
+        self.queue = self.queue + self.playlist['songs']
+        self.refresh_queue()
 
     def add_url_to_queue(self):
-        res = self.get_song_file_name(self.url_entry.text())
-        self.queue.append(
-            {"name": res[0], "ID": res[1]})
-        self.refresh_queue()
+        if self.url_entry.text():
+            res = self.get_song_file_name(self.url_entry.text())
+            self.queue.append(
+                {"name": res[0], "ID": res[1]})
+            self.refresh_queue()
 
     def update_slider(self):
         duration = self.player.duration()
