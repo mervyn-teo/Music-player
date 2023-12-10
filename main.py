@@ -51,8 +51,8 @@ class MusicPlayer(QMainWindow):
         self.normal_button_style = "QPushButton{\
                                     background-color : #64d6d2;\
                                     color: black;\
-                                    padding:10px;\
-                                    border-radius: 5px;\
+                                    padding:8px;\
+                                    border-radius: 2px;\
                                 }\
                                 QPushButton:pressed{\
                                     background-color: #59beba;\
@@ -64,8 +64,8 @@ class MusicPlayer(QMainWindow):
         self.play_style = "QPushButton{\
                                     background-color: #a1d664;\
                                     color: black;\
-                                    padding:10px;\
-                                    border-radius: 5px;\
+                                    padding:8px;\
+                                    border-radius: 2px;\
                                 }\
                                 QPushButton:pressed{ \
                                     background-color: #8fbe59;\
@@ -77,8 +77,8 @@ class MusicPlayer(QMainWindow):
         self.pause_style = "QPushButton{\
                                     background-color : #d66468;\
                                     color: black;\
-                                    padding:10px;\
-                                    border-radius: 5px;\
+                                    padding:8px;\
+                                    border-radius: 2px;\
                                 }\
                                 QPushButton:pressed{\
                                     background-color: #be595d;\
@@ -87,19 +87,7 @@ class MusicPlayer(QMainWindow):
                                     background-color: #ee6f74;\
                                     color: #472123;\
                                 }"
-        self.playlist_open_style = "QPushButton{\
-                                    background-color : #59beba;\
-                                    color: black;\
-                                    padding:10px;\
-                                    border-radius: 5px;\
-                                }\
-                                QPushButton:pressed{\
-                                    background-color: #59beba;\
-                                }\
-                                QPushButton:hover:!pressed{\
-                                    background-color: #59beba;\
-                                    color: #214746;\
-                                }"
+
         self.url_style = "QLineEdit, QLineEdit:focus{ \
                                 border: 1px solid white;\
                                 border-top-style: none;\
@@ -108,8 +96,8 @@ class MusicPlayer(QMainWindow):
                                 color: white;}"
         self.slider_style = "QSlider::groove:horizontal {\
                                 border: 1px solid #999999;\
-                                height: 2px; \
-                                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);\
+                                height: 1px; \
+                                background: #B1B1B1;\
                             }\
                             QSlider::handle:horizontal {\
                                 background: #a1d664;\
@@ -127,7 +115,7 @@ class MusicPlayer(QMainWindow):
         # Set window title
         self.setWindowTitle("YouTube Audio Player")
         self.setStyleSheet(self.window_style)
-        self.setGeometry(300, 300, 300, 150)
+        # self.setGeometry(300, 300, 300, 150)
 
         # layouts
         layout = QVBoxLayout()
@@ -227,6 +215,7 @@ class MusicPlayer(QMainWindow):
             self.play_music(self.download_audio(ID))
             self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
             self.refresh_queue()
+
         return ret_func
 
     def get_song_file_name(self, youtube_url, output_format="mp3"):
@@ -300,6 +289,7 @@ class MusicPlayer(QMainWindow):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
         self.player.play()
         self.player.setVolume(30)
+        self.playing = True
         self.setWindowTitle(f"Now playing: {self.song_name}")
         self.timer.start()
 
@@ -396,7 +386,7 @@ class MusicPlayer(QMainWindow):
         self.playlist_shown = not self.playlist_shown
         if self.playlist_shown:
             self.show_playlist_button.setText('Hide playlist')
-            self.show_playlist_button.setStyleSheet(self.playlist_open_style)
+            self.show_playlist_button.setStyleSheet(self.normal_button_style)
         else:
             self.show_playlist_button.setText('Show playlist')
             self.show_playlist_button.setStyleSheet(self.normal_button_style)
