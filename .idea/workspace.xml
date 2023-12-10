@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="made function to play from playlist">
-      <change afterPath="$PROJECT_DIR$/temp/TqWJt5tfRtI.mp3" afterDir="false" />
+    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="fixed initialisation of temp and playlist">
+      <change afterPath="$PROJECT_DIR$/playlist.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -110,7 +110,7 @@
       <workItem from="1702127085986" duration="8065000" />
       <workItem from="1702150790351" duration="3874000" />
       <workItem from="1702223636707" duration="5873000" />
-      <workItem from="1702231000518" duration="2194000" />
+      <workItem from="1702231000518" duration="1173000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -232,15 +232,7 @@
       <option name="project" value="LOCAL" />
       <updated>1702154111605</updated>
     </task>
-    <task id="LOCAL-00016" summary="made function to play from playlist">
-      <option name="closed" value="true" />
-      <created>1702232288034</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1702232288034</updated>
-    </task>
-    <option name="localTasksCounter" value="17" />
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -284,12 +276,11 @@
     <MESSAGE value="pip" />
     <MESSAGE value="remove the use of subprocess and use yt-dlp instead" />
     <MESSAGE value="fixed initialisation of temp and playlist" />
-    <MESSAGE value="made function to play from playlist" />
-    <option name="LAST_COMMIT_MESSAGE" value="made function to play from playlist" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed initialisation of temp and playlist" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Music_player$test.coverage" NAME="test Coverage Results" MODIFIED="1702151118095" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Music_player$previous.coverage" NAME="previous Coverage Results" MODIFIED="1702151813860" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702233205060" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702232179871" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
