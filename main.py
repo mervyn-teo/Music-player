@@ -3,10 +3,7 @@ import os
 import datetime
 import shutil
 import json
-from yt_dlp import YoutubeDL
-
-# TODO: import instead of using command lines https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
-
+from yt_dlp import YoutubeDL # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
@@ -35,66 +32,80 @@ class MusicPlayer(QMainWindow):
 
         # style sheets
         self.text_style = "color: white;"
+        self.playlist_list_style = "QPushButton{\
+                                    background-color : #252729;\
+                                    color: white;\
+                                    border: none;\
+                                    text-align: left;\
+                                }\
+                                QPushButton:pressed{\
+                                    background-color: darkorange;\
+                                    color: black;\
+                                }\
+                                QPushButton:hover:!pressed{\
+                                    background-color: orange;\
+                                    color: black;\
+                                }"
         self.highlight_text_style = "color: orange;"
         self.window_style = "background-color: #252729;"
         self.normal_button_style = "QPushButton{\
-                background-color : #64d6d2;\
-                color: black;\
-                padding:10px;\
-                border-radius: 5px;\
-            }\
-            QPushButton:pressed{\
-                background-color: #59beba;\
-            }\
-            QPushButton:hover:!pressed{\
-                background-color: #6feee9;\
-                color: #214746;\
-            }"
+                                    background-color : #64d6d2;\
+                                    color: black;\
+                                    padding:10px;\
+                                    border-radius: 5px;\
+                                }\
+                                QPushButton:pressed{\
+                                    background-color: #59beba;\
+                                }\
+                                QPushButton:hover:!pressed{\
+                                    background-color: #6feee9;\
+                                    color: #214746;\
+                                }"
         self.play_style = "QPushButton{\
-                background-color: #a1d664;\
-                color: black;\
-                padding:10px;\
-                border-radius: 5px;\
-            }\
-            QPushButton:pressed{ \
-                background-color: #8fbe59;\
-            }\
-            QPushButton:hover:!pressed{\
-                background-color: #b3ee6f;\
-                color: #364721;\
-            }"
+                                    background-color: #a1d664;\
+                                    color: black;\
+                                    padding:10px;\
+                                    border-radius: 5px;\
+                                }\
+                                QPushButton:pressed{ \
+                                    background-color: #8fbe59;\
+                                }\
+                                QPushButton:hover:!pressed{\
+                                    background-color: #b3ee6f;\
+                                    color: #364721;\
+                                }"
         self.pause_style = "QPushButton{\
-                background-color : #d66468;\
-                color: black;\
-                padding:10px;\
-                border-radius: 5px;\
-            }\
-            QPushButton:pressed{\
-                background-color: #be595d;\
-            }\
-            QPushButton:hover:!pressed{\
-                background-color: #ee6f74;\
-                color: #472123;\
-            }"
+                                    background-color : #d66468;\
+                                    color: black;\
+                                    padding:10px;\
+                                    border-radius: 5px;\
+                                }\
+                                QPushButton:pressed{\
+                                    background-color: #be595d;\
+                                }\
+                                QPushButton:hover:!pressed{\
+                                    background-color: #ee6f74;\
+                                    color: #472123;\
+                                }"
         self.playlist_open_style = "QPushButton{\
-                background-color : #59beba;\
-                color: black;\
-                padding:10px;\
-                border-radius: 5px;\
-            }\
-            QPushButton:pressed{\
-                background-color: #59beba;\
-            }\
-            QPushButton:hover:!pressed{\
-                background-color: #59beba;\
-                color: #214746;\
-            }"
-        self.url_style = ("QLineEdit, QLineEdit:focus{ \
+                                    background-color : #59beba;\
+                                    color: black;\
+                                    padding:10px;\
+                                    border-radius: 5px;\
+                                }\
+                                QPushButton:pressed{\
+                                    background-color: #59beba;\
+                                }\
+                                QPushButton:hover:!pressed{\
+                                    background-color: #59beba;\
+                                    color: #214746;\
+                                }"
+        self.url_style = "QLineEdit, QLineEdit:focus{ \
                                 border: 1px solid white;\
                                 border-top-style: none;\
                                 border-left-style: none;\
                                 border-right-style: none;\
-                                color: white;}")
+                                color: white;}"
         self.slider_style = "QSlider::groove:horizontal {\
                                 border: 1px solid #999999;\
                                 height: 2px; \
@@ -107,6 +118,7 @@ class MusicPlayer(QMainWindow):
                                 margin: -4px -1px; \
                                 border-radius: 4px;\
                             }"
+        self.timer = QTimer(self)
 
         # load playlist
         with open('playlist.json', 'r', encoding='utf-8') as f:
@@ -194,18 +206,28 @@ class MusicPlayer(QMainWindow):
         self.playlist_box.addWidget(t)
         if len(self.playlist["songs"]) > 0:
             for i in range(len(self.playlist["songs"])):
-                temp = QLabel(f"{i + 1}: {self.playlist['songs'][i]['name']}")
+                temp = QPushButton()
+                f = self.play_from_playlist(self.playlist['songs'][i]['ID'])
+                temp.clicked.connect(f)
+                temp.setText(f"{i + 1}: {self.playlist['songs'][i]['name']}")
                 temp.setVisible(False)
-                temp.setStyleSheet(self.text_style)
+                temp.setStyleSheet(self.playlist_list_style)
                 self.playlist_box.addWidget(temp)
         layout.addLayout(self.playlist_box)
 
-        self.timer = QTimer(self)
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.update_slider)
 
         layout.addLayout(horizontal_button)
         layout.addLayout(horizontal_slider)
+
+    def play_from_playlist(self, ID):
+        def ret_func():
+            print(ID)
+            self.play_music(self.download_audio(ID))
+            self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
+            self.refresh_queue()
+        return ret_func
 
     def get_song_file_name(self, youtube_url, output_format="mp3"):
         youtube_dl_opts = {}
@@ -224,10 +246,11 @@ class MusicPlayer(QMainWindow):
             youtube_url = youtube_url[:youtube_url.index('&')]
         print(youtube_url)
 
+        #read temp folder
+        self.setWindowTitle("Loading music...")
         for fn in os.listdir("./temp"):
             os.remove(os.path.join("./temp", fn))
             print("temp file exists, deleting...")
-        print("this is me")
         res = self.get_song_file_name(youtube_url)
 
         self.song_name = res[0]
@@ -277,6 +300,7 @@ class MusicPlayer(QMainWindow):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
         self.player.play()
         self.player.setVolume(30)
+        self.setWindowTitle(f"Now playing: {self.song_name}")
         self.timer.start()
 
     def play_stop(self):
@@ -292,7 +316,6 @@ class MusicPlayer(QMainWindow):
             self.playing = not self.playing
             self.play_button.setStyleSheet(self.play_style)
         elif len(self.queue) > 0:
-
             if self.player.state() == 0:
                 audio_file = self.download_audio(self.queue[0]["ID"])
                 self.playing = True
