@@ -129,7 +129,7 @@ class MusicPlayer(QMainWindow):
         self.setWindowTitle("YouTube Audio Player")
         self.setStyleSheet(self.window_style)
 
-        self.setWindowOpacity(0.95)
+        self.setWindowOpacity(0.93)
 
         # self.setGeometry(300, 300, 300, 150)
 
@@ -193,6 +193,12 @@ class MusicPlayer(QMainWindow):
         self.add_playlist_to_queue_button.clicked.connect(self.add_playlist_to_queue)
         horizontal_button.addWidget(self.add_playlist_to_queue_button)
 
+        # # add youtube playlist to playlist
+        # self.add_yt_playlist_button = QPushButton("add youtube playlist to playlist", self)
+        # self.add_yt_playlist_button.setStyleSheet(self.normal_button_style)
+        # self.add_yt_playlist_button.clicked.connect(self.add_yt_playlist)
+        # horizontal_button.addWidget(self.add_yt_playlist_button)
+
         # play queue
         self.queue_label = QLabel("Song queue:")
         self.queue_label.setStyleSheet(self.text_style)
@@ -200,19 +206,11 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(self.queue_box)
 
         # initialise playlists
-        t = QLabel("playlist:")
-        t.setStyleSheet(self.text_style)
-        t.setVisible(False)
-        self.playlist_box.addWidget(t)
-        if len(self.playlist["songs"]) > 0:
-            for i in range(len(self.playlist["songs"])):
-                temp = QPushButton()
-                f = self.play_from_playlist(self.playlist['songs'][i]['ID'])
-                temp.clicked.connect(f)
-                temp.setText(f"{i + 1}: {self.playlist['songs'][i]['name']}")
-                temp.setVisible(False)
-                temp.setStyleSheet(self.playlist_list_style)
-                self.playlist_box.addWidget(temp)
+        self.playlist_label = QLabel("playlist:")
+        self.playlist_label.setStyleSheet(self.text_style)
+        self.playlist_label.setVisible(False)
+        self.playlist_box.addWidget(self.playlist_label)
+        self.init_playlist()
         layout.addLayout(self.playlist_box)
 
         self.timer.setInterval(100)
@@ -243,12 +241,35 @@ class MusicPlayer(QMainWindow):
         self.volume_text.setStyleSheet(self.text_style)
         horizontal_slider.addWidget(self.volume_text)
         horizontal_slider.addWidget(self.volume_slider)
-
+    def init_playlist(self):
+        if len(self.playlist["songs"]) > 0:
+            for i in range(len(self.playlist["songs"])):
+                temp = QPushButton()
+                f = self.play_from_playlist(self.playlist['songs'][i]['ID'])
+                temp.clicked.connect(f)
+                temp.setText(f"{i + 1}: {self.playlist['songs'][i]['name']}")
+                temp.setVisible(False)
+                temp.setStyleSheet(self.playlist_list_style)
+                self.playlist_box.addWidget(temp)
 
     def volume_adjust(self):
         self.volume = self.volume_slider.sliderPosition()
         self.player.setVolume(self.volume)
 
+    def add_yt_playlist(self):
+        youtube_url = self.url_entry.text()
+        youtube_dl_opts = {}
+        with YoutubeDL(youtube_dl_opts) as ydl:
+            info_dict = ydl.extract_info(youtube_url, download=False)
+            print(info_dict)
+            length = len(info_dict['entries'])
+            playlist = []
+            for i in range(length):
+                temp = {'name': '', 'ID': ''}
+                temp['ID'] = info_dict['entries'][i].get("display_id", None)
+                temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                playlist.append(temp)
+            return playlist
 
     def play_from_playlist(self, ID):
         def ret_func():
@@ -256,7 +277,6 @@ class MusicPlayer(QMainWindow):
             self.play_music(self.download_audio(ID))
             self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
             self.refresh_queue()
-
         return ret_func
 
     def get_song_file_name(self, youtube_url, output_format="mp3"):
@@ -266,8 +286,9 @@ class MusicPlayer(QMainWindow):
             ext = info_dict.get("ext", None)
             filename = info_dict.get("id", None)
             song_name = info_dict.get('title', None)
+            is_playlist = info_dict.get('_type', None) == 'playlist'
             print(filename)
-            return song_name, filename, ext
+            return song_name, filename, ext, is_playlist, info_dict
 
     def download_audio(self, youtube_url,
                        output_format='mp3'):  # TODO: separate permanent download and on-the-spot play
@@ -286,30 +307,53 @@ class MusicPlayer(QMainWindow):
         self.song_name = res[0]
         self.filename = res[1]
         self.ext = res[2]
-        print(f"file name: {self.filename}")
-        print(f"song name: {self.song_name}")
+        self.is_playlist = res[3]
+        if self.is_playlist:
+            self.add_url_to_queue()
+            self.play_pause()
+        else:
+            print(f"file name: {self.filename}")
+            print(f"song name: {self.song_name}")
 
-        ydl_opts = {'outtmpl': f'{self.filename}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
-            'key': 'FFmpegVideoConvertor',
-            'preferedformat': 'mp3'
-        }]}
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download(youtube_url)
-        shutil.move(self.filename + ".mp3", os.path.join("./temp/", self.filename + ".mp3"))
-        return os.path.join("./temp/", self.filename + ".mp3")
+            ydl_opts = {'outtmpl': f'{self.filename}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp3'
+            }]}
+            with YoutubeDL(ydl_opts) as ydl:
+                ydl.download(youtube_url)
+            shutil.move(self.filename + ".mp3", os.path.join("./temp/", self.filename + ".mp3"))
+            return os.path.join("./temp/", self.filename + ".mp3")
 
     def download_and_play(self):
+        self.setWindowTitle("Loading...")
         if self.playing:
             self.play_stop()
         url = self.url_entry.text()
         if not url:
             return
-        audio_file = self.download_audio(url)
-        self.playing = True
-        self.play_button.setText("pause")
-        self.play_music(audio_file)
-        self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
-        self.refresh_queue()
+
+        res = self.get_song_file_name(url)
+        is_playlist = res[3]
+        info_dict = res[4]
+
+        if is_playlist:
+            length = len(info_dict['entries'])
+            playlist = []
+            for i in range(length):
+                temp = {'name': '', 'ID': ''}
+                temp['ID'] = info_dict['entries'][i].get("display_id", None)
+                temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                playlist.append(temp)
+            self.queue = self.queue + playlist
+            self.refresh_queue()
+            self.play_pause()
+        else:
+            audio_file = self.download_audio(url)
+            self.playing = True
+            self.play_button.setText("pause")
+            self.play_music(audio_file)
+            self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
+            self.refresh_queue()
 
     def refresh_queue(self):
         r = self.queue_box.count()
@@ -346,7 +390,7 @@ class MusicPlayer(QMainWindow):
         if self.playing:
             self.player.pause()
             self.play_button.setText("play")
-            self.playing = not self.playing
+            self.playing = False
             self.play_button.setStyleSheet(self.play_style)
         elif len(self.queue) > 0:
             if self.player.state() == 0:
@@ -359,7 +403,7 @@ class MusicPlayer(QMainWindow):
             else:
                 self.player.play()
                 self.play_button.setText("pause")
-                self.playing = not self.playing
+                self.playing = True
                 self.play_button.setStyleSheet(self.pause_style)
     def add_playlist_to_queue(self):
         print(self.playlist['songs'])
@@ -369,9 +413,22 @@ class MusicPlayer(QMainWindow):
     def add_url_to_queue(self):
         if self.url_entry.text():
             res = self.get_song_file_name(self.url_entry.text())
-            self.queue.append(
-                {"name": res[0], "ID": res[1]})
-            self.refresh_queue()
+            is_playlist = res[3]
+            if is_playlist:
+                info_dict = res[4]
+                length = len(info_dict['entries'])
+                playlist = []
+                for i in range(length):
+                    temp = {'name': '', 'ID': ''}
+                    temp['ID'] = info_dict['entries'][i].get("display_id", None)
+                    temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                    playlist.append(temp)
+                self.queue = self.queue + playlist
+                self.refresh_queue()
+            else:
+                self.queue.append(
+                    {"name": res[0], "ID": res[1]})
+                self.refresh_queue()
 
     def update_slider(self):
         duration = self.player.duration()
@@ -404,26 +461,66 @@ class MusicPlayer(QMainWindow):
             value = position / 1000 * duration
             self.player.setPosition(int(value))
 
-    def add_to_playlist(self):  # TODO: fix this global variable
+    def add_to_playlist(self):
         global added_in_playlist
-        if self.filename is not None:
-            added_in_playlist = False
-            for i in self.playlist["songs"]:
-                if i["ID"] == self.filename:
-                    print("already added in playlist")
-                    added_in_playlist = True
-                    break
-            if not added_in_playlist:
-                print(f"{self.song_name} is not in playlist, adding...")
-                self.playlist["songs"].append({"name": self.song_name, "ID": self.filename})
-                temp = QLabel(f"{self.playlist_box.count() + 1}: {self.song_name}")
-                self.playlist_box.addWidget(temp)
-                temp.setStyleSheet(self.text_style)
-                with open('playlist.json', 'w') as f2:
-                    json.dump(self.playlist, f2)
-                print(self.playlist)
+        self.setWindowTitle("checking...")
+        res = self.get_song_file_name(self.url_entry.text())
+        is_playlist = res[3]
+        info_dict = res[4]
+        if is_playlist:
+            length = len(info_dict['entries'])
+            yt_playlist = []
+            for i in range(length):
+                temp = {'name': '', 'ID': ''}
+                temp['ID'] = info_dict['entries'][i].get("display_id", None)
+                temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                yt_playlist.append(temp)
+            self.playlist["songs"] = self.playlist["songs"] + yt_playlist
+            with open('playlist.json', 'w') as f2:
+                json.dump(self.playlist, f2)
+            print(self.playlist)
+            self.refresh_playlist()
+            if self.playing:
+                self.setWindowTitle(f"Now playing: self.queue[0]")
+            else:
+                self.setWindowTitle('YouTube Audio Player')
         else:
-            print("nothing for me to add bruh")
+            if self.filename is not None:
+                added_in_playlist = False
+                for i in self.playlist["songs"]:
+                    if i["ID"] == self.filename:
+                        print("already added in playlist")
+                        added_in_playlist = True
+                        break
+                if not added_in_playlist:
+                    print(f"{self.song_name} is not in playlist, adding...")
+                    self.playlist["songs"].append({"name": self.song_name, "ID": self.filename})
+                    temp = QLabel(f"{self.playlist_box.count() + 1}: {self.song_name}")
+                    self.playlist_box.addWidget(temp)
+                    temp.setStyleSheet(self.text_style)
+                    with open('playlist.json', 'w') as f2:
+                        json.dump(self.playlist, f2)
+                    print(self.playlist)
+            else:
+                print("nothing for me to add bruh")
+
+    def refresh_playlist(self):
+
+        r = self.playlist_box.count()
+        if r > 0:
+            for i in reversed(range(r)):
+                temp = self.playlist_box.itemAt(i).widget()
+                if temp != self.playlist_label:
+                    self.playlist_box.removeWidget(temp)
+        print("here")
+        for i in range(len(self.playlist)):
+            self.init_playlist()
+            if self.playlist_shown:
+                self.show_playlist()
+                self.show_playlist()
+            else:
+                self.show_playlist()
+
 
     def show_playlist(self):
         index = self.playlist_box.count()
