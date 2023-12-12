@@ -5,7 +5,7 @@ this is a music player written in python using [PyQt](https://doc.qt.io/qtforpyt
 ## Installation
 
 **Windows:** 
-Download and run the latest release
+Download and run the [latest release](https://github.com/mervyn-teo/Music-player/releases/latest)
 
 **Linux:** 
 Download dependencies using:
