@@ -1,1 +1,48 @@
-{"songs": [{"name": "\u3010\u8a95\u751f\u65e5\u8a18\u5ff5\u3011\u665a\u9910\u6b4c(tuki.) cover. \u3010\u5384\u502b\u8482\u5152 Earendel\u3011", "ID": "TqWJt5tfRtI"}, {"name": "\u3010Oumua \u57c3\u7a46\u4e9e\u3011\u516d\u7b49\u661f\u306e\u591c | Cover \u6b4c\u56de\u526a\u8f2f", "ID": "ETZvi4r_9EI"}, {"name": "\u3010Enna Alouette\u3011 Enna\u8d85\u9084\u539f\u7ffb\u5531 \u50d5\u304c\u6b7b\u306e\u3046\u3068\u601d\u3063\u305f\u306e\u306f |  \u96d9\u8a9e\u6b4c\u8a5e", "ID": "7fDksxtdYJY"}, {"name": "\u3010Nemesis \u6d85\u9ed8\u3011\u5409\u4ed6\u81ea\u5f48\u81ea\u5531 \u30c9\u30e9\u30a4\u30d5\u30e9\u30ef\u30fc \u4e7e\u71e5\u82b1 | Cover \u6b4c\u56de\u526a\u8f2f", "ID": "AgpTgVHGR8s"}, {"name": "\u3010\u5384\u502b\u8482\u5152 Earendel\u3011\u4eba\u9593\u3060\u3063\u305f \u66fe\u751f\u70ba\u4eba | Cover \u6b4c\u56de\u526a\u8f2f", "ID": "DO4s02RM0lM"}, {"name": "\u3010\u5384\u502b\u8482\u5152 Earendel\u3011Letter Song | Cover \u6b4c\u56de\u526a\u8f2f", "ID": "O7dMvMzktoU"}, {"name": "\u3010\u5384\u502b\u8482\u5152 Earendel\u3011\u5c0f\u591c\u5b50 | Cover \u6b4c\u56de\u526a\u8f2f", "ID": "FfiieJD_EUc"}, {"name": "\u3010Enna Alouette\u3011\u30ab\u30bf\u30aa\u30e2\u30a4", "ID": "iks5idhG4U4"}, {"name": "\u3010Enna Alouette\u3011\u771f\u591c\u4e2d\u306e\u30c9\u30a2~Stay With Me", "ID": "xAdjaq8Lrds"}, {"name": "\u3010Enna Alouette\u3011Enna\u5373\u8208\u6f14\u5531\u52c1\u7206\u55ae\u66f2\u300c\u5fb7\u5dde\u9aa8\u79d1\u300d", "ID": "uUCcVL6tpgE"}]}
+{
+  "songs": [
+    {
+      "name": "\u3010\u8a95\u751f\u65e5\u8a18\u5ff5\u3011\u665a\u9910\u6b4c(tuki.) cover. \u3010\u5384\u502b\u8482\u5152 Earendel\u3011",
+      "ID": "TqWJt5tfRtI"
+    },
+    {
+      "name": "\u3010Oumua \u57c3\u7a46\u4e9e\u3011\u516d\u7b49\u661f\u306e\u591c | Cover \u6b4c\u56de\u526a\u8f2f",
+      "ID": "ETZvi4r_9EI"
+    },
+    {
+      "name": "\u3010Enna Alouette\u3011 Enna\u8d85\u9084\u539f\u7ffb\u5531 \u50d5\u304c\u6b7b\u306e\u3046\u3068\u601d\u3063\u305f\u306e\u306f |  \u96d9\u8a9e\u6b4c\u8a5e",
+      "ID": "7fDksxtdYJY"
+    },
+    {
+      "name": "\u3010Nemesis \u6d85\u9ed8\u3011\u5409\u4ed6\u81ea\u5f48\u81ea\u5531 \u30c9\u30e9\u30a4\u30d5\u30e9\u30ef\u30fc \u4e7e\u71e5\u82b1 | Cover \u6b4c\u56de\u526a\u8f2f",
+      "ID": "AgpTgVHGR8s"
+    },
+    {
+      "name": "\u3010\u5384\u502b\u8482\u5152 Earendel\u3011\u4eba\u9593\u3060\u3063\u305f \u66fe\u751f\u70ba\u4eba | Cover \u6b4c\u56de\u526a\u8f2f",
+      "ID": "DO4s02RM0lM"
+    },
+    {
+      "name": "\u3010\u5384\u502b\u8482\u5152 Earendel\u3011Letter Song | Cover \u6b4c\u56de\u526a\u8f2f",
+      "ID": "O7dMvMzktoU"
+    },
+    {
+      "name": "\u3010\u5384\u502b\u8482\u5152 Earendel\u3011\u5c0f\u591c\u5b50 | Cover \u6b4c\u56de\u526a\u8f2f",
+      "ID": "FfiieJD_EUc"
+    },
+    {
+      "name": "\u3010Enna Alouette\u3011\u30ab\u30bf\u30aa\u30e2\u30a4",
+      "ID": "iks5idhG4U4"
+    },
+    {
+      "name": "\u3010Enna Alouette\u3011\u771f\u591c\u4e2d\u306e\u30c9\u30a2~Stay With Me",
+      "ID": "xAdjaq8Lrds"
+    },
+    {
+      "name": "\u3010Enna Alouette\u3011Enna\u5373\u8208\u6f14\u5531\u52c1\u7206\u55ae\u66f2\u300c\u5fb7\u5dde\u9aa8\u79d1\u300d",
+      "ID": "uUCcVL6tpgE"
+    },
+    {
+      "name": "Gawr Gura - When I'm Gone",
+      "ID": "YZwSzGYtvWg"
+    }
+  ]
+}

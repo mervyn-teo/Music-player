@@ -19,7 +19,7 @@ class MusicPlayer(QMainWindow):
             open("playlist.json", "x")
             print("found no playlist, creating...")
             with open("playlist.json", "w") as temp:
-                json.dump({"songs": []}, temp)
+                json.dump({"songs": []}, temp, indent=2)
         self.player = QMediaPlayer()
         self.initUI()
 
@@ -358,7 +358,7 @@ class MusicPlayer(QMainWindow):
         else:
             audio_file = self.download_audio(url)
             self.playing = True
-            self.play_button.setText("pause")
+            self.play_button.setIcon(self.pause_icon)
             self.play_music(audio_file)
             self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
             self.refresh_queue()
@@ -458,7 +458,7 @@ class MusicPlayer(QMainWindow):
             del self.queue[0]
             audio_file = self.download_audio(self.queue[0]["ID"])
             self.playing = True
-            self.play_button.setText("pause")
+            self.play_button.setIcon(self.pause_icon)
             self.play_music(audio_file)
             print(f"queue dict: {self.queue}")
         self.refresh_queue()
@@ -485,7 +485,7 @@ class MusicPlayer(QMainWindow):
                 yt_playlist.append(temp)
             self.playlist["songs"] = self.playlist["songs"] + yt_playlist
             with open('playlist.json', 'w') as f2:
-                json.dump(self.playlist, f2)
+                json.dump(self.playlist, f2, indent=2)
             print(self.playlist)
             self.refresh_playlist()
             if self.playing:
@@ -493,22 +493,18 @@ class MusicPlayer(QMainWindow):
             else:
                 self.setWindowTitle('YouTube Audio Player')
         else:
-            if self.filename is not None:
-                added_in_playlist = False
-                for i in self.playlist["songs"]:
-                    if i["ID"] == self.filename:
-                        print("already added in playlist")
-                        added_in_playlist = True
-                        break
-                if not added_in_playlist:
-                    print(f"{self.song_name} is not in playlist, adding...")
-                    self.playlist["songs"].append({"name": self.song_name, "ID": self.filename})
-                    temp = QLabel(f"{self.playlist_box.count() + 1}: {self.song_name}")
-                    self.playlist_box.addWidget(temp)
-                    temp.setStyleSheet(self.text_style)
-                    with open('playlist.json', 'w') as f2:
-                        json.dump(self.playlist, f2)
-                    print(self.playlist)
+            if self.url_entry is not None:
+                self.setWindowTitle(f"adding {self.song_name} ...")
+                self.playlist["songs"].append({"name": self.song_name, "ID": self.filename})
+                temp = QLabel(f"{self.playlist_box.count() + 1}: {self.song_name}")
+                self.playlist_box.addWidget(temp)
+                temp.setStyleSheet(self.text_style)
+                with open('playlist.json', 'w') as f2:
+                    json.dump(self.playlist, f2, indent=2)
+                if self.playing:
+                    self.setWindowTitle(f"Now playing: {self.song_name}")
+                else:
+                    self.setWindowTitle('YouTube Audio Player')
             else:
                 print("nothing for me to add bruh")
 
