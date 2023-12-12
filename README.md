@@ -9,8 +9,9 @@ Download and run the latest release
 
 **Linux:** 
 Download dependencies using:
-'''
+
+```
 $ pip install -r requirements.txt
-'''
+```
 
 and run main.py
