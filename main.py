@@ -152,19 +152,26 @@ class MusicPlayer(QMainWindow):
         layout.addWidget(self.url_entry)
 
         # Download and play button
-        self.download_play_button = QPushButton("Download and Play", self)
+        self.download_play_button = QPushButton(self)
+        self.download_and_play_icon = self.style().standardIcon(getattr(QStyle, 'SP_ToolBarVerticalExtensionButton'))
+        self.download_play_button.setIcon(self.download_and_play_icon)
         self.download_play_button.setStyleSheet(self.normal_button_style)
         self.download_play_button.clicked.connect(self.download_and_play)
         horizontal_button.addWidget(self.download_play_button)
 
         # play/pause button
-        self.play_button = QPushButton("pause", self)
-        self.play_button.setStyleSheet(self.pause_style)
+        self.play_button = QPushButton(self)
+        self.pause_icon = self.style().standardIcon(getattr(QStyle, 'SP_MediaPause'))
+        self.play_icon = self.style().standardIcon(getattr(QStyle, 'SP_MediaPlay'))
+        self.play_button.setIcon(self.play_icon)
+        self.play_button.setStyleSheet(self.play_style)
         self.play_button.clicked.connect(self.play_pause)
         horizontal_button.addWidget(self.play_button)
 
         # next song button
-        self.next_song_button = QPushButton("next", self)
+        self.next_song_button = QPushButton( self)
+        self.next_icon = self.style().standardIcon(getattr(QStyle, 'SP_MediaSkipForward'))
+        self.next_song_button.setIcon(self.next_icon)
         self.next_song_button.setStyleSheet(self.normal_button_style)
         self.next_song_button.clicked.connect(self.next_song)
         horizontal_button.addWidget(self.next_song_button)
@@ -330,6 +337,7 @@ class MusicPlayer(QMainWindow):
             self.play_stop()
         url = self.url_entry.text()
         if not url:
+            self.setWindowTitle("YouTube Audio Player")
             return
 
         res = self.get_song_file_name(url)
@@ -389,20 +397,20 @@ class MusicPlayer(QMainWindow):
     def play_pause(self):
         if self.playing:
             self.player.pause()
-            self.play_button.setText("play")
+            self.play_button.setIcon(self.play_icon)
             self.playing = False
             self.play_button.setStyleSheet(self.play_style)
         elif len(self.queue) > 0:
             if self.player.state() == 0:
                 audio_file = self.download_audio(self.queue[0]["ID"])
                 self.playing = True
-                self.play_button.setText("pause")
+                self.play_button.setIcon(self.pause_icon)
                 self.play_music(audio_file)
                 print(f"queue dict: {self.queue}")
                 self.refresh_queue()
             else:
                 self.player.play()
-                self.play_button.setText("pause")
+                self.play_button.setIcon(self.pause_icon)
                 self.playing = True
                 self.play_button.setStyleSheet(self.pause_style)
     def add_playlist_to_queue(self):
@@ -529,6 +537,7 @@ class MusicPlayer(QMainWindow):
             my_widget.setVisible(not self.playlist_shown)
             index -= 1
         self.playlist_shown = not self.playlist_shown
+
         if self.playlist_shown:
             self.show_playlist_button.setText('Hide playlist')
             self.show_playlist_button.setStyleSheet(self.normal_button_style)
