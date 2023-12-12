@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="made requirements.txt">
-      <change afterPath="$PROJECT_DIR$/main.spec" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="change bug in play/pause button">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/playlist.json" beforeDir="false" afterPath="$PROJECT_DIR$/playlist.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +27,6 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -115,7 +111,7 @@
       <workItem from="1702231000518" duration="1173000" />
       <workItem from="1702247833913" duration="61000" />
       <workItem from="1702294929831" duration="6874000" />
-      <workItem from="1702390346963" duration="788000" />
+      <workItem from="1702390346963" duration="4280000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -269,7 +265,15 @@
       <option name="project" value="LOCAL" />
       <updated>1702379236646</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="change bug in play/pause button">
+      <option name="closed" value="true" />
+      <created>1702394084765</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1702394084765</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -316,11 +320,12 @@
     <MESSAGE value="made function to play from playlist" />
     <MESSAGE value="made volume adjustment function&#10;fixed some bugs" />
     <MESSAGE value="made requirements.txt" />
-    <option name="LAST_COMMIT_MESSAGE" value="made requirements.txt" />
+    <MESSAGE value="change bug in play/pause button" />
+    <option name="LAST_COMMIT_MESSAGE" value="change bug in play/pause button" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Music_player$test.coverage" NAME="test Coverage Results" MODIFIED="1702151118095" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Music_player$previous.coverage" NAME="previous Coverage Results" MODIFIED="1702151813860" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702390830407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702396879144" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

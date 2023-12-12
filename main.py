@@ -3,11 +3,11 @@ import os
 import datetime
 import shutil
 import json
-from yt_dlp import YoutubeDL # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
+from yt_dlp import \
+    YoutubeDL  # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
-
 
 class MusicPlayer(QMainWindow):
     def __init__(self):
@@ -153,6 +153,7 @@ class MusicPlayer(QMainWindow):
 
         # Download and play button
         self.download_play_button = QPushButton(self)
+        self.download_play_button.setFocusPolicy(Qt.NoFocus)
         self.download_and_play_icon = self.style().standardIcon(getattr(QStyle, 'SP_ToolBarVerticalExtensionButton'))
         self.download_play_button.setIcon(self.download_and_play_icon)
         self.download_play_button.setStyleSheet(self.normal_button_style)
@@ -161,6 +162,7 @@ class MusicPlayer(QMainWindow):
 
         # play/pause button
         self.play_button = QPushButton(self)
+        self.play_button.setFocusPolicy(Qt.NoFocus)
         self.pause_icon = self.style().standardIcon(getattr(QStyle, 'SP_MediaPause'))
         self.play_icon = self.style().standardIcon(getattr(QStyle, 'SP_MediaPlay'))
         self.play_button.setIcon(self.play_icon)
@@ -169,7 +171,8 @@ class MusicPlayer(QMainWindow):
         horizontal_button.addWidget(self.play_button)
 
         # next song button
-        self.next_song_button = QPushButton( self)
+        self.next_song_button = QPushButton(self)
+        self.next_song_button.setFocusPolicy(Qt.NoFocus)
         self.next_icon = self.style().standardIcon(getattr(QStyle, 'SP_MediaSkipForward'))
         self.next_song_button.setIcon(self.next_icon)
         self.next_song_button.setStyleSheet(self.normal_button_style)
@@ -178,24 +181,28 @@ class MusicPlayer(QMainWindow):
 
         # add playlist button
         self.add_playlist_button = QPushButton("add to playlist", self)
+        self.add_playlist_button.setFocusPolicy(Qt.NoFocus)
         self.add_playlist_button.setStyleSheet(self.normal_button_style)
         self.add_playlist_button.clicked.connect(self.add_to_playlist)
         horizontal_button.addWidget(self.add_playlist_button)
 
         # show/hide play button
         self.show_playlist_button = QPushButton("show playlist", self)
+        self.show_playlist_button.setFocusPolicy(Qt.NoFocus)
         self.show_playlist_button.setStyleSheet(self.normal_button_style)
         self.show_playlist_button.clicked.connect(self.show_playlist)
         horizontal_button.addWidget(self.show_playlist_button)
 
         # add song to queue
         self.add_url_to_queue_button = QPushButton("add to queue", self)
+        self.add_url_to_queue_button.setFocusPolicy(Qt.NoFocus)
         self.add_url_to_queue_button.setStyleSheet(self.normal_button_style)
         self.add_url_to_queue_button.clicked.connect(self.add_url_to_queue)
         horizontal_button.addWidget(self.add_url_to_queue_button)
 
         # add playlist to song
         self.add_playlist_to_queue_button = QPushButton("add playlist to queue", self)
+        self.add_playlist_to_queue_button.setFocusPolicy(Qt.NoFocus)
         self.add_playlist_to_queue_button.setStyleSheet(self.normal_button_style)
         self.add_playlist_to_queue_button.clicked.connect(self.add_playlist_to_queue)
         horizontal_button.addWidget(self.add_playlist_to_queue_button)
@@ -240,7 +247,7 @@ class MusicPlayer(QMainWindow):
 
         # volume
         self.volume_slider = QSlider(Qt.Horizontal, self)
-        self.volume_slider.setRange(0,100)
+        self.volume_slider.setRange(0, 100)
         self.volume_slider.setStyleSheet(self.volume_slider_style)
         self.volume_slider.sliderMoved.connect(self.volume_adjust)
 
@@ -248,10 +255,18 @@ class MusicPlayer(QMainWindow):
         self.volume_text.setStyleSheet(self.text_style)
         horizontal_slider.addWidget(self.volume_text)
         horizontal_slider.addWidget(self.volume_slider)
+
+    def mousePressEvent(self, event):
+        focused_widget = QApplication.focusWidget()
+        if isinstance(focused_widget, QLineEdit):
+            focused_widget.clearFocus()
+        QMainWindow.mousePressEvent(self, event)
+
     def init_playlist(self):
         if len(self.playlist["songs"]) > 0:
             for i in range(len(self.playlist["songs"])):
                 temp = QPushButton()
+                temp.setFocusPolicy(Qt.NoFocus)
                 f = self.play_from_playlist(self.playlist['songs'][i]['ID'])
                 temp.clicked.connect(f)
                 temp.setText(f"{i + 1}: {self.playlist['songs'][i]['name']}")
@@ -284,6 +299,7 @@ class MusicPlayer(QMainWindow):
             self.play_music(self.download_audio(ID))
             self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
             self.refresh_queue()
+
         return ret_func
 
     def get_song_file_name(self, youtube_url, output_format="mp3"):
@@ -304,7 +320,7 @@ class MusicPlayer(QMainWindow):
             youtube_url = youtube_url[:youtube_url.index('&')]
         print(youtube_url)
 
-        #read temp folder
+        # read temp folder
         self.setWindowTitle("Loading music...")
         for fn in os.listdir("./temp"):
             os.remove(os.path.join("./temp", fn))
@@ -330,6 +346,10 @@ class MusicPlayer(QMainWindow):
                 ydl.download(youtube_url)
             shutil.move(self.filename + ".mp3", os.path.join("./temp/", self.filename + ".mp3"))
             return os.path.join("./temp/", self.filename + ".mp3")
+
+    def keyPressEvent(self, event):
+        if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
+            self.play_pause()
 
     def download_and_play(self):
         self.setWindowTitle("Loading...")
@@ -413,6 +433,7 @@ class MusicPlayer(QMainWindow):
                 self.play_button.setIcon(self.pause_icon)
                 self.playing = True
                 self.play_button.setStyleSheet(self.pause_style)
+
     def add_playlist_to_queue(self):
         print(self.playlist['songs'])
         self.queue = self.queue + self.playlist['songs']
@@ -524,7 +545,6 @@ class MusicPlayer(QMainWindow):
                 self.show_playlist()
             else:
                 self.show_playlist()
-
 
     def show_playlist(self):
         index = self.playlist_box.count()
