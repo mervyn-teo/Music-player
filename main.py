@@ -246,7 +246,10 @@ class MusicPlayer(QMainWindow):
         layout.addLayout(horizontal_slider)
 
         # volume
+        self.volume = 30
+        self.player.setVolume(self.volume)
         self.volume_slider = QSlider(Qt.Horizontal, self)
+        self.volume_slider.setFocusPolicy(Qt.NoFocus)
         self.volume_slider.setRange(0, 100)
         self.volume_slider.setStyleSheet(self.volume_slider_style)
         self.volume_slider.sliderMoved.connect(self.volume_adjust)
@@ -347,9 +350,25 @@ class MusicPlayer(QMainWindow):
             shutil.move(self.filename + ".mp3", os.path.join("./temp/", self.filename + ".mp3"))
             return os.path.join("./temp/", self.filename + ".mp3")
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event): # keypress detection
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
             self.play_pause()
+        elif (event.key() == Qt.Key_Up):
+            if self.volume>100:
+                self.volume = 100
+                self.player.setVolume(self.volume)
+            else:
+                self.volume += 5
+                self.player.setVolume(self.volume)
+                self.volume_slider.setSliderPosition(self.volume)
+        elif (event.key() == Qt.Key_Down):
+            if self.volume<0:
+                self.volume = 0
+                self.player.setVolume(self.volume)
+            else:
+                self.volume -= 5
+                self.player.setVolume(self.volume)
+                self.volume_slider.setSliderPosition(self.volume)
 
     def download_and_play(self):
         self.setWindowTitle("Loading...")
@@ -401,8 +420,6 @@ class MusicPlayer(QMainWindow):
     def play_music(self, file_path):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
         self.player.play()
-        self.volume = 30
-        self.player.setVolume(self.volume)
         self.volume_slider.setSliderPosition(self.volume)
         self.playing = True
         self.setWindowTitle(f"Now playing: {self.song_name}")
