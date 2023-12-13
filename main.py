@@ -1,13 +1,12 @@
 import sys
 import os
 import datetime
-import shutil
 import json
-from yt_dlp import \
-    YoutubeDL  # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
+from yt_dlp import YoutubeDL  # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
+
 
 class MusicPlayer(QMainWindow):
     def __init__(self):
@@ -293,7 +292,6 @@ class MusicPlayer(QMainWindow):
                 temp_box = QHBoxLayout()
                 temp = QPushButton()
 
-
                 # playlist titles
                 temp.setFocusPolicy(Qt.NoFocus)
                 f = self.play_from_playlist(self.playlist['songs'][i]['ID'])
@@ -301,7 +299,6 @@ class MusicPlayer(QMainWindow):
                 temp.setText(f"{i + 1}: {self.playlist['songs'][i]['name']}")
                 temp.setVisible(False)
                 temp.setStyleSheet(self.playlist_list_style)
-
 
                 # playlist actions
                 up = QPushButton('↑')
@@ -322,8 +319,8 @@ class MusicPlayer(QMainWindow):
 
     def rank_down(self, i):
         def ret_func():
-            max = len(self.playlist['songs']) - 1
-            if not i == max:
+            maxi = len(self.playlist['songs']) - 1
+            if not i == maxi:
                 temp = self.playlist['songs'][i]
                 self.playlist['songs'][i] = self.playlist['songs'][i + 1]
                 self.playlist['songs'][i + 1] = temp
@@ -344,7 +341,6 @@ class MusicPlayer(QMainWindow):
                     json.dump(self.playlist, f2, indent=2)
         return ret_func
 
-
     def volume_adjust(self):
         self.volume = self.volume_slider.sliderPosition()
         self.player.setVolume(self.volume)
@@ -358,9 +354,7 @@ class MusicPlayer(QMainWindow):
             length = len(info_dict['entries'])
             playlist = []
             for i in range(length):
-                temp = {'name': '', 'ID': ''}
-                temp['ID'] = info_dict['entries'][i].get("display_id", None)
-                temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
                 playlist.append(temp)
             return playlist
 
@@ -373,7 +367,7 @@ class MusicPlayer(QMainWindow):
 
         return ret_func
 
-    def get_song_file_name(self, youtube_url, output_format="mp3"):
+    def get_song_file_name(self, youtube_url):
         youtube_dl_opts = {}
         with YoutubeDL(youtube_dl_opts) as ydl:
             info_dict = ydl.extract_info(youtube_url, download=False)
@@ -384,8 +378,7 @@ class MusicPlayer(QMainWindow):
             print(filename)
             return song_name, filename, ext, is_playlist, info_dict
 
-    def download_audio(self, youtube_url,
-                       output_format='mp3'):  # TODO: separate permanent download and on-the-spot play
+    def download_audio(self, youtube_url):  # TODO: separate permanent download and on-the-spot play
         # remove suffixes
         if youtube_url.find('&') >= 0:
             youtube_url = youtube_url[:youtube_url.index('&')]
@@ -409,13 +402,8 @@ class MusicPlayer(QMainWindow):
             print(f"file name: {self.filename}")
             print(f"song name: {self.song_name}")
 
-            ydl_opts = {'outtmpl': f'/temp/{self.filename}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
-                'key': 'FFmpegVideoConvertor',
-                'preferedformat': 'mp3'
-            }]}
-            with YoutubeDL(ydl_opts) as ydl:
-                ydl.download(youtube_url)
-            return os.path.join("./temp/", self.filename + ".mp3")
+            self.download_only(self.filename)
+            # return os.path.join("./temp/", self.filename + ".mp3")
 
     def download_only(self, ID):
         ydl_opts = {'outtmpl': f'/temp/{ID}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
@@ -424,21 +412,21 @@ class MusicPlayer(QMainWindow):
         }]}
         with YoutubeDL(ydl_opts) as ydl:
             ydl.download(ID)
-        return os.path.join(f"./temp/{ID}.mp3")
+        # return os.path.join(f"./temp/{ID}.mp3")
 
-    def keyPressEvent(self, event): # keypress detection
+    def keyPressEvent(self, event):  # keypress detection
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
             self.play_pause()
-        elif (event.key() == Qt.Key_Up):
-            if self.volume>100:
+        elif event.key() == Qt.Key_Up:
+            if self.volume > 100:
                 self.volume = 100
                 self.player.setVolume(self.volume)
             else:
                 self.volume += 5
                 self.player.setVolume(self.volume)
                 self.volume_slider.setSliderPosition(self.volume)
-        elif (event.key() == Qt.Key_Down):
-            if self.volume<0:
+        elif event.key() == Qt.Key_Down:
+            if self.volume < 0:
                 self.volume = 0
                 self.player.setVolume(self.volume)
             else:
@@ -463,22 +451,19 @@ class MusicPlayer(QMainWindow):
             length = len(info_dict['entries'])
             playlist = []
             for i in range(length):
-                temp = {'name': '', 'ID': ''}
-                temp['ID'] = info_dict['entries'][i].get("display_id", None)
-                temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
                 playlist.append(temp)
             self.queue = self.queue + playlist
             self.refresh_queue()
             self.play_pause()
         else:
-            audio_file = self.download_audio(url)
+            audio_file = os.path.join(f"./temp/{info_dict['id']}.mp3")  # TODO: extract id & playlist using youtube link
+                                                                        # TODO: make new class using QObject to run in different thread
+            self.download_audio(url)
             self.playing = True
             self.play_button.setIcon(self.pause_icon)
             self.play_music(audio_file)
-            if self.buffer_option:
-                if len(self.queue) > 1:
-                    self.next_song_filename = self.download_only(self.queue['ID'])
-                    self.next_song_downloaded = True
+            self.buffer_next()
             self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
             self.refresh_queue()
 
@@ -519,7 +504,8 @@ class MusicPlayer(QMainWindow):
             self.play_button.setStyleSheet(self.play_style)
         elif len(self.queue) > 0:
             if self.player.state() == 0:
-                audio_file = self.download_audio(self.queue[0]["ID"])
+                audio_file = f'./temp/{self.queue[0]["ID"]}.mp3'
+                self.download_audio(self.queue[0]["ID"])
                 self.playing = True
                 self.play_button.setIcon(self.pause_icon)
                 self.play_music(audio_file)
@@ -545,9 +531,7 @@ class MusicPlayer(QMainWindow):
                 length = len(info_dict['entries'])
                 playlist = []
                 for i in range(length):
-                    temp = {'name': '', 'ID': ''}
-                    temp['ID'] = info_dict['entries'][i].get("display_id", None)
-                    temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                    temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
                     playlist.append(temp)
                 self.queue = self.queue + playlist
                 self.refresh_queue()
@@ -576,7 +560,8 @@ class MusicPlayer(QMainWindow):
             if self.next_song_downloaded:
                 audio_file = self.next_song_filename
             else:
-                audio_file = self.download_audio(self.queue[1]["ID"])
+                audio_file = f'./temp/{self.queue[1]["ID"]}.mp3'
+                self.download_audio(self.queue[1]["ID"])
             del self.queue[0]
             self.play_music(audio_file)
             self.playing = True
@@ -588,7 +573,8 @@ class MusicPlayer(QMainWindow):
     def buffer_next(self):
         if self.buffer_option:
             if len(self.queue) > 1:
-                self.next_song_filename = self.download_only(self.queue[1]['ID'])
+                self.next_song_filename = os.path.join(f"./temp/{self.queue[1]['ID']}.mp3")
+                self.download_only(self.queue[1]['ID'])
                 self.next_song_downloaded = True
 
     def set_position(self, position):
@@ -607,9 +593,7 @@ class MusicPlayer(QMainWindow):
             length = len(info_dict['entries'])
             yt_playlist = []
             for i in range(length):
-                temp = {'name': '', 'ID': ''}
-                temp['ID'] = info_dict['entries'][i].get("display_id", None)
-                temp['name'] = info_dict['entries'][i].get('fulltitle', None)
+                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
                 yt_playlist.append(temp)
             self.playlist["songs"] = self.playlist["songs"] + yt_playlist
             with open('playlist.json', 'w') as f2:
@@ -654,10 +638,10 @@ class MusicPlayer(QMainWindow):
 
     def show_playlist(self):
         index = self.playlist_box.count()
-        while (index > 1):
+        while index > 1:
             my_layout = self.playlist_box.itemAt(index - 1).layout()
             wid_count = my_layout.count()
-            while (wid_count > 0):
+            while wid_count > 0:
                 my_widget = my_layout.itemAt(wid_count - 1).widget()
                 my_widget.setVisible(not self.playlist_shown)
                 wid_count -= 1
