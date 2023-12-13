@@ -438,7 +438,7 @@ class MusicPlayer(QMainWindow):
         self.player.play()
         self.volume_slider.setSliderPosition(self.volume)
         self.playing = True
-        self.setWindowTitle(f"Now playing: {self.song_name}")
+        self.setWindowTitle(f"Now playing: {self.queue[0]['name']}")
         self.buffer_next()
         self.timer.start()
 
@@ -521,7 +521,6 @@ class MusicPlayer(QMainWindow):
             print(f"queue dict: {self.queue}")
             self.buffer_next()
         self.refresh_queue()
-
 
     def buffer_next(self):
         if self.buffer_option:
