@@ -36,6 +36,7 @@ class MusicPlayer(QMainWindow):
                                     background-color : #252729;\
                                     color: white;\
                                     border: none;\
+                                    margin: 0px;\
                                     text-align: left;\
                                 }\
                                 QPushButton:pressed{\
@@ -46,6 +47,22 @@ class MusicPlayer(QMainWindow):
                                     background-color: orange;\
                                     color: black;\
                                 }"
+        self.playlist_up_down_style = "QPushButton{\
+                                            background-color : #252729;\
+                                            color: white;\
+                                            border: none;\
+                                            margin: 0px;\
+                                            width: 15px;\
+                                            text-align: center;\
+                                        }\
+                                        QPushButton:pressed{\
+                                            background-color: darkorange;\
+                                            color: black;\
+                                        }\
+                                        QPushButton:hover:!pressed{\
+                                            background-color: orange;\
+                                            color: black;\
+                                        }"
         self.highlight_text_style = "color: orange;"
         self.window_style = "background-color: #252729;"
         self.normal_button_style = "QPushButton{\
@@ -273,14 +290,60 @@ class MusicPlayer(QMainWindow):
     def init_playlist(self):
         if len(self.playlist["songs"]) > 0:
             for i in range(len(self.playlist["songs"])):
+                temp_box = QHBoxLayout()
                 temp = QPushButton()
+
+
+                # playlist titles
                 temp.setFocusPolicy(Qt.NoFocus)
                 f = self.play_from_playlist(self.playlist['songs'][i]['ID'])
                 temp.clicked.connect(f)
                 temp.setText(f"{i + 1}: {self.playlist['songs'][i]['name']}")
                 temp.setVisible(False)
                 temp.setStyleSheet(self.playlist_list_style)
-                self.playlist_box.addWidget(temp)
+
+
+                # playlist actions
+                up = QPushButton('↑')
+                down = QPushButton('↓')
+                u = self.rank_up(i)
+                d = self.rank_down(i)
+                up.setStyleSheet(self.playlist_up_down_style)
+                down.setStyleSheet(self.playlist_up_down_style)
+                up.clicked.connect(u)
+                down.clicked.connect(d)
+                up.setVisible(False)
+                down.setVisible(False)
+
+                temp_box.addWidget(up)
+                temp_box.addWidget(down)
+                temp_box.addWidget(temp, Qt.AlignLeft)  # add playlist to layout
+                self.playlist_box.addLayout(temp_box)
+
+    def rank_down(self, i):
+        def ret_func():
+            max = len(self.playlist['songs']) - 1
+            if not i == max:
+                temp = self.playlist['songs'][i]
+                self.playlist['songs'][i] = self.playlist['songs'][i + 1]
+                self.playlist['songs'][i + 1] = temp
+                self.refresh_playlist()
+                with open('playlist.json', 'w') as f2:
+                    json.dump(self.playlist, f2, indent=2)
+        return ret_func
+
+    def rank_up(self, i):
+        def ret_func():
+            if not i == 0:
+                print(i)
+                temp = self.playlist['songs'][i]
+                self.playlist['songs'][i] = self.playlist['songs'][i - 1]
+                self.playlist['songs'][i - 1] = temp
+                self.refresh_playlist()
+                with open('playlist.json', 'w') as f2:
+                    json.dump(self.playlist, f2, indent=2)
+        return ret_func
+
 
     def volume_adjust(self):
         self.volume = self.volume_slider.sliderPosition()
@@ -576,11 +639,10 @@ class MusicPlayer(QMainWindow):
     def refresh_playlist(self):
 
         r = self.playlist_box.count()
-        if r > 0:
-            for i in reversed(range(r)):
-                temp = self.playlist_box.itemAt(i).widget()
-                if temp != self.playlist_label:
-                    self.playlist_box.removeWidget(temp)
+        if r > 1:
+            for i in reversed(range(1, r)):
+                temp = self.playlist_box.itemAt(i).layout()
+                self.playlist_box.removeItem(temp)
         print("here")
         for i in range(len(self.playlist)):
             self.init_playlist()
@@ -592,10 +654,15 @@ class MusicPlayer(QMainWindow):
 
     def show_playlist(self):
         index = self.playlist_box.count()
-        while (index > 0):
-            my_widget = self.playlist_box.itemAt(index - 1).widget()
-            my_widget.setVisible(not self.playlist_shown)
+        while (index > 1):
+            my_layout = self.playlist_box.itemAt(index - 1).layout()
+            wid_count = my_layout.count()
+            while (wid_count > 0):
+                my_widget = my_layout.itemAt(wid_count - 1).widget()
+                my_widget.setVisible(not self.playlist_shown)
+                wid_count -= 1
             index -= 1
+        self.playlist_box.itemAt(0).widget().setVisible(not self.playlist_shown)
         self.playlist_shown = not self.playlist_shown
 
         if self.playlist_shown:

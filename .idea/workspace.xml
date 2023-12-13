@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="Made buffer function">
-      <change afterPath="$PROJECT_DIR$/temp/7fDksxtdYJY.mp3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/temp/AgpTgVHGR8s.mp3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/temp/DO4s02RM0lM.mp3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/temp/TqWJt5tfRtI.mp3" afterDir="false" />
+    <list default="true" id="bd797b56-b43e-4915-9889-c7424ac0f566" name="Changes" comment="corrected windoes title">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -116,7 +113,7 @@
       <workItem from="1702294929831" duration="6874000" />
       <workItem from="1702390346963" duration="6214000" />
       <workItem from="1702478346751" duration="27000" />
-      <workItem from="1702479673868" duration="2928000" />
+      <workItem from="1702479673868" duration="6464000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -302,7 +299,15 @@
       <option name="project" value="LOCAL" />
       <updated>1702482246750</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="corrected windoes title">
+      <option name="closed" value="true" />
+      <created>1702482688247</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1702482688247</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -353,11 +358,12 @@
     <MESSAGE value="fixed focus problem&#10;added function to play using space bar" />
     <MESSAGE value="fixed volume bar focus problem&#10;added function to adjust volume using arrow keys" />
     <MESSAGE value="Made buffer function" />
-    <option name="LAST_COMMIT_MESSAGE" value="Made buffer function" />
+    <MESSAGE value="corrected windoes title" />
+    <option name="LAST_COMMIT_MESSAGE" value="corrected windoes title" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Music_player$test.coverage" NAME="test Coverage Results" MODIFIED="1702151118095" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Music_player$previous.coverage" NAME="previous Coverage Results" MODIFIED="1702151813860" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702482609010" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Music_player$main.coverage" NAME="main Coverage Results" MODIFIED="1702486168482" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
