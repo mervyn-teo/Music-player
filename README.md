@@ -14,4 +14,4 @@ Download dependencies using:
 $ pip install -r requirements.txt
 ```
 
-and run main.py
+and run [main.py](https://github.com/mervyn-teo/Music-player/blob/master/main.py)
