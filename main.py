@@ -121,6 +121,11 @@ class MusicPlayer(QMainWindow):
                                     }"
         self.timer = QTimer(self)
 
+        # buffer next song
+        self.buffer_option = True
+        self.next_song_downloaded = False
+        self.next_song_filename = ''
+
         # load playlist
         with open('playlist.json', 'r', encoding='utf-8') as f:
             self.playlist = json.load(f)
@@ -341,14 +346,22 @@ class MusicPlayer(QMainWindow):
             print(f"file name: {self.filename}")
             print(f"song name: {self.song_name}")
 
-            ydl_opts = {'outtmpl': f'{self.filename}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
+            ydl_opts = {'outtmpl': f'/temp/{self.filename}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': 'mp3'
             }]}
             with YoutubeDL(ydl_opts) as ydl:
                 ydl.download(youtube_url)
-            shutil.move(self.filename + ".mp3", os.path.join("./temp/", self.filename + ".mp3"))
             return os.path.join("./temp/", self.filename + ".mp3")
+
+    def download_only(self, ID):
+        ydl_opts = {'outtmpl': f'/temp/{ID}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp3'
+        }]}
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download(ID)
+        return os.path.join(f"./temp/{ID}.mp3")
 
     def keyPressEvent(self, event): # keypress detection
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
@@ -399,6 +412,10 @@ class MusicPlayer(QMainWindow):
             self.playing = True
             self.play_button.setIcon(self.pause_icon)
             self.play_music(audio_file)
+            if self.buffer_option:
+                if len(self.queue) > 1:
+                    self.next_song_filename = self.download_only(self.queue['ID'])
+                    self.next_song_downloaded = True
             self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
             self.refresh_queue()
 
@@ -408,7 +425,6 @@ class MusicPlayer(QMainWindow):
             for i in reversed(range(r)):
                 temp = self.queue_box.itemAt(i).widget()
                 if temp != self.queue_label:
-                    print(i)
                     self.queue_box.removeWidget(temp)
         for i in range(len(self.queue)):
             self.queue_box.addWidget(QLabel(f"{i + 1}: {self.queue[i]['name']}"))
@@ -423,6 +439,7 @@ class MusicPlayer(QMainWindow):
         self.volume_slider.setSliderPosition(self.volume)
         self.playing = True
         self.setWindowTitle(f"Now playing: {self.song_name}")
+        self.buffer_next()
         self.timer.start()
 
     def play_stop(self):
@@ -493,13 +510,24 @@ class MusicPlayer(QMainWindow):
         if self.player.state() != 0:
             self.player.stop()
         if len(self.queue) > 0:
+            if self.next_song_downloaded:
+                audio_file = self.next_song_filename
+            else:
+                audio_file = self.download_audio(self.queue[1]["ID"])
             del self.queue[0]
-            audio_file = self.download_audio(self.queue[0]["ID"])
+            self.play_music(audio_file)
             self.playing = True
             self.play_button.setIcon(self.pause_icon)
-            self.play_music(audio_file)
             print(f"queue dict: {self.queue}")
+            self.buffer_next()
         self.refresh_queue()
+
+
+    def buffer_next(self):
+        if self.buffer_option:
+            if len(self.queue) > 1:
+                self.next_song_filename = self.download_only(self.queue[1]['ID'])
+                self.next_song_downloaded = True
 
     def set_position(self, position):
         duration = self.player.duration()
