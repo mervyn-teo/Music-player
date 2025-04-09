@@ -2,10 +2,11 @@ import sys
 import os
 import datetime
 import json
-from yt_dlp import YoutubeDL  # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
+
+from yt_worker import MetadataWorker, DownloadWorker
 
 
 class MusicPlayer(QMainWindow):
@@ -367,52 +368,82 @@ class MusicPlayer(QMainWindow):
 
         return ret_func
 
-    def get_song_file_name(self, youtube_url):
-        youtube_dl_opts = {}
-        with YoutubeDL(youtube_dl_opts) as ydl:
-            info_dict = ydl.extract_info(youtube_url, download=False)
-            ext = info_dict.get("ext", None)
-            filename = info_dict.get("id", None)
-            song_name = info_dict.get('title', None)
-            is_playlist = info_dict.get('_type', None) == 'playlist'
-            print(filename)
-            return song_name, filename, ext, is_playlist, info_dict
+    # get_song_file_name is now async, handled by MetadataWorker
 
-    def download_audio(self, youtube_url):  # TODO: separate permanent download and on-the-spot play
+    def download_audio(self, youtube_url):
         # remove suffixes
-        if youtube_url.find('&') >= 0:
-            youtube_url = youtube_url[:youtube_url.index('&')]
-        print(youtube_url)
+        if '&' in youtube_url:
+            youtube_url = youtube_url.split('&')[0]
 
-        # read temp folder
         self.setWindowTitle("Loading music...")
-        for fn in os.listdir("./temp"):
-            os.remove(os.path.join("./temp", fn))
-            print("temp file exists, deleting...")
-        res = self.get_song_file_name(youtube_url)
 
-        self.song_name = res[0]
-        self.filename = res[1]
-        self.ext = res[2]
-        self.is_playlist = res[3]
-        if self.is_playlist:
-            self.add_url_to_queue()
-            self.play_pause()
-        else:
-            print(f"file name: {self.filename}")
-            print(f"song name: {self.song_name}")
+        # Clean temp folder safely
+        try:
+            for fn in os.listdir("./temp"):
+                path = os.path.join("./temp", fn)
+                if os.path.isfile(path):
+                    os.remove(path)
+        except Exception as e:
+            print(f"Error cleaning temp: {e}")
 
-            self.download_only(self.filename)
-            # return os.path.join("./temp/", self.filename + ".mp3")
+        # Start metadata extraction in background
+        self.meta_thread = QThread()
+        self.meta_worker = MetadataWorker(youtube_url)
+        self.meta_worker.moveToThread(self.meta_thread)
+        self.meta_thread.started.connect(self.meta_worker.run)
+        self.meta_worker.finished.connect(self.on_metadata_ready)
+        self.meta_worker.error.connect(self.on_metadata_error)
+        self.meta_worker.finished.connect(self.meta_thread.quit)
+        self.meta_worker.finished.connect(self.meta_worker.deleteLater)
+        self.meta_thread.finished.connect(self.meta_thread.deleteLater)
+        self.meta_thread.start()
+
+    def on_metadata_ready(self, info):
+        try:
+            self.song_name = info.get('title', '')
+            self.filename = info.get('id', '')
+            self.ext = info.get('ext', 'mp3')
+            self.is_playlist = info.get('_type') == 'playlist'
+            self.info_dict = info
+
+            if self.is_playlist:
+                self.add_url_to_queue()
+                self.play_pause()
+            else:
+                print(f"file name: {self.filename}")
+                print(f"song name: {self.song_name}")
+                self.download_audio_file(self.filename)
+        except Exception as e:
+            print(f"Metadata processing error: {e}")
+            self.setWindowTitle("Error loading metadata")
+
+    def on_metadata_error(self, error_msg):
+        print(f"Metadata error: {error_msg}")
+        self.setWindowTitle("Error loading metadata")
+
+    def download_audio_file(self, video_id):
+        self.dl_thread = QThread()
+        self.dl_worker = DownloadWorker(video_id)
+        self.dl_worker.moveToThread(self.dl_thread)
+        self.dl_thread.started.connect(self.dl_worker.run)
+        self.dl_worker.finished.connect(self.on_download_finished)
+        self.dl_worker.error.connect(self.on_download_error)
+        self.dl_worker.finished.connect(self.dl_thread.quit)
+        self.dl_worker.finished.connect(self.dl_worker.deleteLater)
+        self.dl_thread.finished.connect(self.dl_thread.deleteLater)
+        self.dl_thread.start()
+
+    def on_download_finished(self, video_id):
+        audio_file = os.path.join("./temp", f"{video_id}.mp3")
+        self.play_music(audio_file)
+
+    def on_download_error(self, error_msg):
+        print(f"Download error: {error_msg}")
+        self.setWindowTitle("Error downloading audio")
 
     def download_only(self, ID):
-        ydl_opts = {'outtmpl': f'/temp/{ID}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
-            'key': 'FFmpegVideoConvertor',
-            'preferedformat': 'mp3'
-        }]}
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download(ID)
-        # return os.path.join(f"./temp/{ID}.mp3")
+        # Use background worker instead
+        self.download_audio_file(ID)
 
     def keyPressEvent(self, event):  # keypress detection
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
@@ -443,29 +474,42 @@ class MusicPlayer(QMainWindow):
             self.setWindowTitle("YouTube Audio Player")
             return
 
-        res = self.get_song_file_name(url)
-        is_playlist = res[3]
-        info_dict = res[4]
+        # Start metadata extraction in background
+        self.meta_thread = QThread()
+        self.meta_worker = MetadataWorker(url)
+        self.meta_worker.moveToThread(self.meta_thread)
+        self.meta_thread.started.connect(self.meta_worker.run)
+        self.meta_worker.finished.connect(self.on_download_and_play_metadata_ready)
+        self.meta_worker.error.connect(self.on_metadata_error)
+        self.meta_worker.finished.connect(self.meta_thread.quit)
+        self.meta_worker.finished.connect(self.meta_worker.deleteLater)
+        self.meta_thread.finished.connect(self.meta_thread.deleteLater)
+        self.meta_thread.start()
 
-        if is_playlist:
-            length = len(info_dict['entries'])
-            playlist = []
-            for i in range(length):
-                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
-                playlist.append(temp)
-            self.queue = self.queue + playlist
-            self.refresh_queue()
-            self.play_pause()
-        else:
-            audio_file = os.path.join(f"./temp/{info_dict['id']}.mp3")  # TODO: extract id & playlist using youtube link
-                                                                        # TODO: make new class using QObject to run in different thread
-            self.download_audio(url)
-            self.playing = True
-            self.play_button.setIcon(self.pause_icon)
-            self.play_music(audio_file)
-            self.buffer_next()
-            self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
-            self.refresh_queue()
+    def on_download_and_play_metadata_ready(self, info):
+        try:
+            is_playlist = info.get('_type') == 'playlist'
+            if is_playlist:
+                entries = info.get('entries', [])
+                playlist = []
+                for entry in entries:
+                    playlist.append({
+                        'name': entry.get('fulltitle', ''),
+                        'ID': entry.get('display_id', '')
+                    })
+                self.queue.extend(playlist)
+                self.refresh_queue()
+                self.play_pause()
+            else:
+                video_id = info.get('id', '')
+                self.song_name = info.get('title', '')
+                self.filename = video_id
+                self.download_audio_file(video_id)
+                self.queue.insert(0, {"name": self.song_name, "ID": video_id})
+                self.refresh_queue()
+        except Exception as e:
+            print(f"Error processing metadata: {e}")
+            self.setWindowTitle("Error loading metadata")
 
     def refresh_queue(self):
         r = self.queue_box.count()
