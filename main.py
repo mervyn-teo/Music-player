@@ -54,6 +54,7 @@ class Worker(QObject):
 class MusicPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.threads = []  # Track running threads
         if not os.path.exists("temp"):
             os.makedirs("temp")
             print("found no temp folder, creating...")
@@ -64,6 +65,14 @@ class MusicPlayer(QMainWindow):
                 json.dump({"songs": []}, temp, indent=2)
         self.player = QMediaPlayer()
         self.initUI()
+
+    def closeEvent(self, event):
+        # Gracefully stop all running threads
+        for thread in self.threads:
+            if thread.isRunning():
+                thread.quit()
+                thread.wait()
+        event.accept()
 
     def initUI(self):
         self.playlist_shown = False
@@ -421,6 +430,7 @@ class MusicPlayer(QMainWindow):
             worker.finished.connect(worker.deleteLater)
             thread.finished.connect(thread.deleteLater)
             thread.start()
+            self.threads.append(thread)
 
         return ret_func
 
@@ -516,6 +526,7 @@ class MusicPlayer(QMainWindow):
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
+        self.threads.append(self.thread)
 
     def _on_worker_progress(self, message):
         self.setWindowTitle(message)
@@ -547,6 +558,7 @@ class MusicPlayer(QMainWindow):
         self.worker2.finished.connect(self.worker2.deleteLater)
         self.thread2.finished.connect(self.thread2.deleteLater)
         self.thread2.start()
+        self.threads.append(self.thread2)
 
     def _on_audio_downloaded(self, audio_file, info_dict):
         self.song_name = info_dict.get('title', '')
