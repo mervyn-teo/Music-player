@@ -530,8 +530,83 @@ class MusicPlayer(QMainWindow):
                 self.player.setVolume(self.volume)
                 self.volume_slider.setSliderPosition(self.volume)
 
-    # Removed duplicate download_and_play and on_download_and_play_metadata_ready methods.
-    # The correct versions exist earlier in the class definition.
+    def download_and_play(self):
+        """Handles the 'Download and Play' button click."""
+        url = self.url_entry.text()
+        if not url:
+            print("No URL entered.")
+            return # Or show a message to the user
+
+        print(f"Download and play requested for URL: {url}")
+        # Stop current playback before starting new
+        if self.playing:
+            self.play_stop()
+
+        # Start metadata fetching
+        self.start_metadata_worker(url, self.on_download_and_play_metadata_ready, self.on_metadata_error)
+
+    def on_download_and_play_metadata_ready(self, info):
+        """Callback after metadata is fetched for download_and_play."""
+        try:
+            is_playlist = info.get('_type') == 'playlist'
+            if is_playlist:
+                # Handle playlist: Add all to queue and start first
+                entries = info.get('entries', [])
+                playlist_items = []
+                for entry in entries:
+                    video_id = entry.get('id')
+                    song_name = entry.get('title', 'Unknown Title')
+                    if video_id:
+                        playlist_items.append({'name': song_name, 'ID': video_id})
+
+                if not playlist_items:
+                    print("Playlist found, but no valid songs to play.")
+                    self.setWindowTitle("Empty or invalid playlist")
+                    return
+
+                print(f"Playlist detected, adding {len(playlist_items)} songs to queue.")
+                self.queue = playlist_items # Replace queue with playlist
+                self.refresh_queue()
+                # Now play the first song from the newly populated queue
+                first_song = self.queue[0]
+                video_id = first_song['ID']
+                song_name = first_song['name']
+                audio_file = os.path.join("./temp", f"{video_id}.mp3")
+                if os.path.exists(audio_file):
+                    self.play_music(audio_file, song_name)
+                else:
+                    self.start_download_worker(video_id, song_name)
+
+            else:
+                # Handle single video
+                video_id = info.get('id')
+                song_name = info.get('title', 'Unknown Title')
+
+                if not video_id:
+                    print("Error: Could not get video ID from metadata.")
+                    self.setWindowTitle("Error: Missing video ID")
+                    return
+
+                print(f"Metadata received: {song_name} ({video_id})")
+                # Clear queue and add this song
+                self.queue = [{'name': song_name, 'ID': video_id}]
+                self.refresh_queue()
+
+                # Check if file exists, play or download
+                audio_file = os.path.join("./temp", f"{video_id}.mp3")
+                if os.path.exists(audio_file):
+                    print("Playing existing file.")
+                    self.play_music(audio_file, song_name)
+                else:
+                    print("File not found locally, starting download...")
+                    self.start_download_worker(video_id, song_name)
+
+            # Clear URL entry after processing
+            self.url_entry.clear()
+
+        except Exception as e:
+            print(f"Error processing metadata for download/play: {e}")
+            self.setWindowTitle("Error processing song info")
 
 
     def refresh_queue(self):
