@@ -8,49 +8,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
 
 
-class Worker(QObject):
-    finished = pyqtSignal(object)
-    progress = pyqtSignal(str)
-
-    def __init__(self, url, mode="download_and_play"):
-        super().__init__()
-        self.url = url
-        self.mode = mode
-
-    def run(self):
-        result = None
-        try:
-            if self.mode == "download_and_play":
-                result = self._download_and_play()
-            elif self.mode == "download_audio":
-                result = self._download_audio()
-        except Exception as e:
-            self.progress.emit(f"Error: {str(e)}")
-        self.finished.emit(result)
-
-    def _download_and_play(self):
-        youtube_dl_opts = {}
-        with YoutubeDL(youtube_dl_opts) as ydl:
-            info_dict = ydl.extract_info(self.url, download=False)
-            is_playlist = info_dict.get('_type', None) == 'playlist'
-            if is_playlist:
-                playlist = []
-                for entry in info_dict['entries']:
-                    playlist.append({'name': entry.get('fulltitle', ''), 'ID': entry.get('display_id', '')})
-                return {'is_playlist': True, 'playlist': playlist, 'info_dict': info_dict}
-            else:
-                return {'is_playlist': False, 'info_dict': info_dict}
-
-    def _download_audio(self):
-        ydl_opts = {'outtmpl': f'./temp/%(id)s.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
-            'key': 'FFmpegVideoConvertor',
-            'preferedformat': 'mp3'
-        }]}
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([self.url])
-        return None
-
-
 class MusicPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -486,57 +443,29 @@ class MusicPlayer(QMainWindow):
             self.setWindowTitle("YouTube Audio Player")
             return
 
-        self.thread = QThread()
-        self.worker = Worker(url, mode="download_and_play")
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self._on_download_finished)
-        self.worker.progress.connect(self._on_worker_progress)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.thread.start()
+        res = self.get_song_file_name(url)
+        is_playlist = res[3]
+        info_dict = res[4]
 
-    def _on_worker_progress(self, message):
-        self.setWindowTitle(message)
-
-    def _on_download_finished(self, result):
-        if result is None:
-            self.setWindowTitle("Download failed")
-            return
-
-        if result.get('is_playlist'):
-            playlist = result.get('playlist', [])
-            self.queue.extend(playlist)
+        if is_playlist:
+            length = len(info_dict['entries'])
+            playlist = []
+            for i in range(length):
+                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
+                playlist.append(temp)
+            self.queue = self.queue + playlist
             self.refresh_queue()
             self.play_pause()
         else:
-            info_dict = result.get('info_dict')
-            audio_file = os.path.join(f"./temp/{info_dict['id']}.mp3")
-            # download audio in background thread
-            self._download_audio_async(info_dict['webpage_url'], audio_file, info_dict)
-    
-    def _download_audio_async(self, url, audio_file, info_dict):
-        self.thread2 = QThread()
-        self.worker2 = Worker(url, mode="download_audio")
-        self.worker2.moveToThread(self.thread2)
-        self.thread2.started.connect(self.worker2.run)
-        self.worker2.finished.connect(lambda _: self._on_audio_downloaded(audio_file, info_dict))
-        self.worker2.progress.connect(self._on_worker_progress)
-        self.worker2.finished.connect(self.thread2.quit)
-        self.worker2.finished.connect(self.worker2.deleteLater)
-        self.thread2.finished.connect(self.thread2.deleteLater)
-        self.thread2.start()
-
-    def _on_audio_downloaded(self, audio_file, info_dict):
-        self.song_name = info_dict.get('title', '')
-        self.filename = info_dict.get('id', '')
-        self.playing = True
-        self.play_button.setIcon(self.pause_icon)
-        self.play_music(audio_file)
-        self.buffer_next()
-        self.queue.insert(0, {"name": self.song_name, "ID": self.filename})
-        self.refresh_queue()
+            audio_file = os.path.join(f"./temp/{info_dict['id']}.mp3")  # TODO: extract id & playlist using youtube link
+                                                                        # TODO: make new class using QObject to run in different thread
+            self.download_audio(url)
+            self.playing = True
+            self.play_button.setIcon(self.pause_icon)
+            self.play_music(audio_file)
+            self.buffer_next()
+            self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
+            self.refresh_queue()
 
     def refresh_queue(self):
         r = self.queue_box.count()
