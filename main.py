@@ -1003,6 +1003,9 @@ class MusicPlayer(QMainWindow):
             self.show_playlist_button.setText('Show playlist')
             self.show_playlist_button.setStyleSheet(self.normal_button_style)
 
+        # Adjust window size to fit content after toggling playlist
+        self.adjustSize()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
