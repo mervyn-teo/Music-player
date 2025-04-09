@@ -43,8 +43,8 @@ class Worker(QObject):
 
     def _download_audio(self):
         ydl_opts = {'outtmpl': f'./temp/%(id)s.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3'
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp3'
         }]}
         with YoutubeDL(ydl_opts) as ydl:
             ydl.download([self.url])
@@ -449,12 +449,12 @@ class MusicPlayer(QMainWindow):
             # return os.path.join("./temp/", self.filename + ".mp3")
 
     def download_only(self, ID):
-        ydl_opts = {'outtmpl': f'./temp/{ID}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3'
+        ydl_opts = {'outtmpl': f'/temp/{ID}.%(ext)s', 'format': 'bestaudio', 'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp3'
         }]}
         with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([ID])
+            ydl.download(ID)
         # return os.path.join(f"./temp/{ID}.mp3")
 
     def keyPressEvent(self, event):  # keypress detection
