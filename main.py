@@ -21,6 +21,7 @@ class MusicPlayer(QMainWindow):
             with open("playlist.json", "w") as temp:
                 json.dump({"songs": []}, temp, indent=2)
         self.player = QMediaPlayer()
+        self.player.error.connect(self.handle_player_error)
         self.initUI()
 
     def initUI(self):
@@ -526,8 +527,13 @@ class MusicPlayer(QMainWindow):
                 self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.text_style)
 
     def play_music(self, file_path):
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
-        self.player.play()
+        try:
+            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
+            self.player.play()
+        except Exception as e:
+            print(f"Error playing media: {e}")
+            self.setWindowTitle("Error playing media")
+            return
         self.volume_slider.setSliderPosition(self.volume)
         self.playing = True
         self.setWindowTitle(f"Now playing: {self.queue[0]['name']}")
@@ -706,3 +712,6 @@ if __name__ == '__main__':
     ex = MusicPlayer()
     ex.show()
     sys.exit(app.exec_())
+    def handle_player_error(self, error):
+        print(f"QMediaPlayer error: {self.player.errorString()}")
+        self.setWindowTitle(f"Playback error: {self.player.errorString()}")
