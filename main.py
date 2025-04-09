@@ -539,20 +539,18 @@ class MusicPlayer(QMainWindow):
         self.refresh_queue()
 
     def refresh_queue(self):
-        count = self.queue_box.count()
-        for i in reversed(range(count)):
-            item = self.queue_box.itemAt(i)
-            widget = item.widget()
-            if widget is not None and widget != self.queue_label:
-                widget.setParent(None)
-
-        for idx, song in enumerate(self.queue):
-            label = QLabel(f"{idx + 1}: {song['name']}")
-            if idx == 0:
-                label.setStyleSheet(self.highlight_text_style)
+        r = self.queue_box.count()
+        if r > 0:
+            for i in reversed(range(r)):
+                temp = self.queue_box.itemAt(i).widget()
+                if temp != self.queue_label:
+                    self.queue_box.removeWidget(temp)
+        for i in range(len(self.queue)):
+            self.queue_box.addWidget(QLabel(f"{i + 1}: {self.queue[i]['name']}"))
+            if i == 0:
+                self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.highlight_text_style)
             else:
-                label.setStyleSheet(self.text_style)
-            self.queue_box.addWidget(label)
+                self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.text_style)
 
     def play_music(self, file_path):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
@@ -694,67 +692,40 @@ class MusicPlayer(QMainWindow):
                 print("nothing for me to add bruh")
 
     def refresh_playlist(self):
-        # Remove all playlist items except the label at index 0
-        count = self.playlist_box.count()
-        for i in reversed(range(1, count)):
-            item = self.playlist_box.itemAt(i)
-            layout = item.layout()
-            if layout is not None:
-                while layout.count():
-                    child = layout.takeAt(0)
-                    if child.widget():
-                        child.widget().setParent(None)
-                self.playlist_box.removeItem(layout)
 
-        # Rebuild playlist entries
-        for idx, song in enumerate(self.playlist.get("songs", [])):
-            temp_box = QHBoxLayout()
-            btn = QPushButton(f"{idx + 1}: {song['name']}")
-            btn.setFocusPolicy(Qt.NoFocus)
-            btn.setStyleSheet(self.playlist_list_style)
-            btn.clicked.connect(self.play_from_playlist(song['ID']))
-
-            up_btn = QPushButton('↑')
-            down_btn = QPushButton('↓')
-            up_btn.setStyleSheet(self.playlist_up_down_style)
-            down_btn.setStyleSheet(self.playlist_up_down_style)
-            up_btn.clicked.connect(self.rank_up(idx))
-            down_btn.clicked.connect(self.rank_down(idx))
-
-            temp_box.addWidget(up_btn)
-            temp_box.addWidget(down_btn)
-            temp_box.addWidget(btn, Qt.AlignLeft)
-            self.playlist_box.addLayout(temp_box)
-
-            # Set visibility based on current toggle state
-            visible = self.playlist_shown
-            btn.setVisible(visible)
-            up_btn.setVisible(visible)
-            down_btn.setVisible(visible)
+        r = self.playlist_box.count()
+        if r > 1:
+            for i in reversed(range(1, r)):
+                temp = self.playlist_box.itemAt(i).layout()
+                self.playlist_box.removeItem(temp)
+        print("here")
+        for i in range(len(self.playlist)):
+            self.init_playlist()
+            if self.playlist_shown:
+                self.show_playlist()
+                self.show_playlist()
+            else:
+                self.show_playlist()
 
     def show_playlist(self):
         index = self.playlist_box.count()
         while index > 1:
-            layout = self.playlist_box.itemAt(index - 1).layout()
-            if layout is not None:
-                for j in range(layout.count()):
-                    widget = layout.itemAt(j).widget()
-                    if widget:
-                        widget.setVisible(not self.playlist_shown)
+            my_layout = self.playlist_box.itemAt(index - 1).layout()
+            wid_count = my_layout.count()
+            while wid_count > 0:
+                my_widget = my_layout.itemAt(wid_count - 1).widget()
+                my_widget.setVisible(not self.playlist_shown)
+                wid_count -= 1
             index -= 1
-
-        # toggle label visibility
-        label_widget = self.playlist_box.itemAt(0).widget()
-        if label_widget:
-            label_widget.setVisible(not self.playlist_shown)
-
+        self.playlist_box.itemAt(0).widget().setVisible(not self.playlist_shown)
         self.playlist_shown = not self.playlist_shown
 
         if self.playlist_shown:
             self.show_playlist_button.setText('Hide playlist')
+            self.show_playlist_button.setStyleSheet(self.normal_button_style)
         else:
             self.show_playlist_button.setText('Show playlist')
-        self.show_playlist_button.setStyleSheet(self.normal_button_style)
+            self.show_playlist_button.setStyleSheet(self.normal_button_style)
 
 
 if __name__ == '__main__':
