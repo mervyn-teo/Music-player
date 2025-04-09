@@ -691,6 +691,11 @@ class MusicPlayer(QMainWindow):
                 self.timer.start() # Start slider updates
                 # Trigger buffering for the *next* song only after playback starts
                 self.buffer_next() # Ensure this call exists
+
+                # Clear download tracking vars on successful playback start
+                self.current_playback_dl_worker = None
+                self.current_playback_dl_thread = None
+                self.playback_download_cancelled = False
             else:
                  print(f"Error: Player not available for {abs_file_path}")
                  self.setWindowTitle(f"Error: Player unavailable for {song_name}")
