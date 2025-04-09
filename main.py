@@ -404,9 +404,23 @@ class MusicPlayer(QMainWindow):
     def play_from_playlist(self, ID):
         def ret_func():
             print(ID)
-            self.play_music(self.download_audio(ID))
-            self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
-            self.refresh_queue()
+
+            def after_download():
+                audio_file = f'./temp/{ID}.mp3'
+                self.play_music(audio_file)
+                self.queue.insert(0, {"name": f"{self.song_name}", "ID": f"{self.filename}"})
+                self.refresh_queue()
+
+            thread = QThread()
+            worker = Worker(ID, mode="download_audio")
+            worker.moveToThread(thread)
+            thread.started.connect(worker.run)
+            worker.finished.connect(lambda _: after_download())
+            worker.progress.connect(self._on_worker_progress)
+            worker.finished.connect(thread.quit)
+            worker.finished.connect(worker.deleteLater)
+            thread.finished.connect(thread.deleteLater)
+            thread.start()
 
         return ret_func
 
@@ -445,7 +459,10 @@ class MusicPlayer(QMainWindow):
             print(f"file name: {self.filename}")
             print(f"song name: {self.song_name}")
 
-            self.download_only(self.filename)
+            try:
+                self.download_only(self.filename)
+            except Exception as e:
+                print(f"Download error: {e}")
             # return os.path.join("./temp/", self.filename + ".mp3")
 
     def download_only(self, ID):
@@ -453,8 +470,11 @@ class MusicPlayer(QMainWindow):
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3'
         }]}
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([ID])
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                ydl.download([ID])
+        except Exception as e:
+            print(f"Download error: {e}")
         # return os.path.join(f"./temp/{ID}.mp3")
 
     def keyPressEvent(self, event):  # keypress detection
