@@ -2,8 +2,7 @@ import sys
 import os
 import datetime
 import json
-import yt_dlp
-from yt_dlp.utils import DownloadError
+from yt_dlp import YoutubeDL  # yt-dlp docs: https://github.com/yt-dlp/yt-dlp/blob/c54ddfba0f7d68034339426223d75373c5fc86df/yt_dlp/YoutubeDL.py#L457
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
@@ -31,7 +30,7 @@ class Worker(QObject):
 
     def _download_and_play(self):
         youtube_dl_opts = {}
-        with yt_dlp.YoutubeDL(youtube_dl_opts) as ydl:
+        with YoutubeDL(youtube_dl_opts) as ydl:
             info_dict = ydl.extract_info(self.url, download=False)
             is_playlist = info_dict.get('_type', None) == 'playlist'
             if is_playlist:
@@ -47,7 +46,7 @@ class Worker(QObject):
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3'
         }]}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with YoutubeDL(ydl_opts) as ydl:
             ydl.download([self.url])
         return None
 
@@ -401,7 +400,7 @@ class MusicPlayer(QMainWindow):
     def add_yt_playlist(self):
         youtube_url = self.url_entry.text()
         youtube_dl_opts = {}
-        with yt_dlp.YoutubeDL(youtube_dl_opts) as ydl:
+        with YoutubeDL(youtube_dl_opts) as ydl:
             info_dict = ydl.extract_info(youtube_url, download=False)
             print(info_dict)
             length = len(info_dict['entries'])
@@ -437,7 +436,7 @@ class MusicPlayer(QMainWindow):
 
     def get_song_file_name(self, youtube_url):
         youtube_dl_opts = {}
-        with yt_dlp.YoutubeDL(youtube_dl_opts) as ydl:
+        with YoutubeDL(youtube_dl_opts) as ydl:
             info_dict = ydl.extract_info(youtube_url, download=False)
             ext = info_dict.get("ext", None)
             filename = info_dict.get("id", None)
@@ -482,9 +481,9 @@ class MusicPlayer(QMainWindow):
             'preferredcodec': 'mp3'
         }]}
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with YoutubeDL(ydl_opts) as ydl:
                 ydl.download([ID])
-        except DownloadError as e:
+        except Exception as e:
             print(f"Download error: {e}")
         # return os.path.join(f"./temp/{ID}.mp3")
 
