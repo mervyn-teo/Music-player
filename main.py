@@ -548,8 +548,49 @@ class MusicPlayer(QMainWindow):
             else:
                 self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.text_style)
 
-    # Removed duplicate play_music method.
-    # The correct version (accepting song_name) exists earlier in the class definition.
+    def play_music(self, file_path, song_name):
+        """Sets the media source and starts playback."""
+        print(f"Playing music: {song_name} from {file_path}")
+        try:
+            # Ensure the file path is absolute for QUrl
+            abs_file_path = os.path.abspath(file_path)
+            media_content = QMediaContent(QUrl.fromLocalFile(abs_file_path))
+
+            # Check if media is valid before playing
+            if media_content.isNull():
+                 print(f"Error: Could not create valid QMediaContent for {abs_file_path}")
+                 self.setWindowTitle(f"Error: Invalid media for {song_name}")
+                 # Attempt to play next song?
+                 # self.next_song() # Careful with loops
+                 return
+
+            self.player.setMedia(media_content)
+
+            # Check player status before playing
+            if self.player.isAvailable():
+                self.player.play()
+                self.playing = True
+                self.play_button.setIcon(self.pause_icon)
+                self.play_button.setStyleSheet(self.pause_style)
+                self.setWindowTitle(f"Now playing: {song_name}")
+                self.volume_slider.setSliderPosition(self.volume) # Set volume again
+                self.timer.start() # Start slider updates
+                # Trigger buffering for the *next* song only after playback starts
+                self.buffer_next() # Ensure this call exists
+            else:
+                 print(f"Error: Player not available for {abs_file_path}")
+                 self.setWindowTitle(f"Error: Player unavailable for {song_name}")
+                 # Attempt to play next song?
+                 # self.next_song()
+
+        except Exception as e:
+            print(f"Error setting/playing media: {e}")
+            self.setWindowTitle(f"Error playing {song_name}")
+            self.playing = False # Ensure state is correct
+            self.play_button.setIcon(self.play_icon)
+            self.play_button.setStyleSheet(self.play_style)
+            # Attempt to play next song?
+            # self.next_song()
 
 
     def play_stop(self):
@@ -732,8 +773,30 @@ class MusicPlayer(QMainWindow):
             print("Queue empty, cannot play next.")
 
 
-    # Removed duplicate buffer_next method.
-    # The correct version exists earlier in the class definition.
+    def buffer_next(self):
+        """Initiates download for the next song in the queue if buffering is enabled."""
+        self.next_song_downloaded = False # Reset buffer state initially
+        self.next_song_filename = ''
+        if self.buffer_option and len(self.queue) > 1:
+            next_song_info = self.queue[1]
+            video_id = next_song_info['ID']
+            song_name = next_song_info['name']
+            print(f"Checking buffer for next song: {song_name} ({video_id})")
+            # Call download_only which checks existence and starts worker if needed
+            self.download_only(video_id, song_name)
+            # Note: self.next_song_downloaded is set in download_only or on_download_finished
+
+    def cleanup_previous_song_file(self, video_id):
+        """Safely removes the audio file for the given video ID."""
+        if not video_id:
+            return
+        try:
+            file_path = os.path.join("./temp", f"{video_id}.mp3")
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                print(f"Cleaned up temp file: {file_path}")
+        except Exception as e:
+            print(f"Error cleaning up file for ID {video_id}: {e}")
 
 
     def set_position(self, position):
