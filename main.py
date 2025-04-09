@@ -611,19 +611,9 @@ class MusicPlayer(QMainWindow):
             else:
                 self.queue_box.itemAt(i + 1).widget().setStyleSheet(self.text_style)
 
-    def play_music(self, file_path):
-        try:
-            self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
-            self.player.play()
-        except Exception as e:
-            print(f"Error playing media: {e}")
-            self.setWindowTitle("Error playing media")
-            return
-        self.volume_slider.setSliderPosition(self.volume)
-        self.playing = True
-        self.setWindowTitle(f"Now playing: {self.queue[0]['name']}")
-        self.buffer_next()
-        self.timer.start()
+    # Removed duplicate play_music method.
+    # The correct version (accepting song_name) exists earlier in the class definition.
+
 
     def play_stop(self):
         """Stops playback and resets UI elements."""
@@ -806,12 +796,9 @@ class MusicPlayer(QMainWindow):
             print("Queue empty, cannot play next.")
 
 
-    def buffer_next(self):
-        if self.buffer_option:
-            if len(self.queue) > 1:
-                self.next_song_filename = os.path.join(f"./temp/{self.queue[1]['ID']}.mp3")
-                self.download_only(self.queue[1]['ID'])
-                self.next_song_downloaded = True
+    # Removed duplicate buffer_next method.
+    # The correct version exists earlier in the class definition.
+
 
     def set_position(self, position):
         duration = self.player.duration()
