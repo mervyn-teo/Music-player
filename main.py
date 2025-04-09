@@ -530,51 +530,9 @@ class MusicPlayer(QMainWindow):
                 self.player.setVolume(self.volume)
                 self.volume_slider.setSliderPosition(self.volume)
 
-    def download_and_play(self):
-        self.setWindowTitle("Loading...")
-        if self.playing:
-            self.play_stop()
-        url = self.url_entry.text()
-        if not url:
-            self.setWindowTitle("YouTube Audio Player")
-            return
+    # Removed duplicate download_and_play and on_download_and_play_metadata_ready methods.
+    # The correct versions exist earlier in the class definition.
 
-        # Start metadata extraction in background
-        self.meta_thread = QThread()
-        self.meta_worker = MetadataWorker(url)
-        self.meta_worker.moveToThread(self.meta_thread)
-        self.meta_thread.started.connect(self.meta_worker.run)
-        self.meta_worker.finished.connect(self.on_download_and_play_metadata_ready)
-        self.meta_worker.error.connect(self.on_metadata_error)
-        self.meta_worker.finished.connect(self.meta_thread.quit)
-        self.meta_worker.finished.connect(self.meta_worker.deleteLater)
-        self.meta_thread.finished.connect(self.meta_thread.deleteLater)
-        self.meta_thread.start()
-
-    def on_download_and_play_metadata_ready(self, info):
-        try:
-            is_playlist = info.get('_type') == 'playlist'
-            if is_playlist:
-                entries = info.get('entries', [])
-                playlist = []
-                for entry in entries:
-                    playlist.append({
-                        'name': entry.get('fulltitle', ''),
-                        'ID': entry.get('display_id', '')
-                    })
-                self.queue.extend(playlist)
-                self.refresh_queue()
-                self.play_pause()
-            else:
-                video_id = info.get('id', '')
-                self.song_name = info.get('title', '')
-                self.filename = video_id
-                self.download_audio_file(video_id)
-                self.queue.insert(0, {"name": self.song_name, "ID": video_id})
-                self.refresh_queue()
-        except Exception as e:
-            print(f"Error processing metadata: {e}")
-            self.setWindowTitle("Error loading metadata")
 
     def refresh_queue(self):
         r = self.queue_box.count()
@@ -645,12 +603,11 @@ class MusicPlayer(QMainWindow):
                     # Playback will start in on_download_finished
             # else: QMediaPlayer.PlayingState - do nothing if already playing
 
-    def add_playlist_to_queue(self):
-                self.play_button.setIcon(self.pause_icon)
-                self.playing = True
-                self.play_button.setStyleSheet(self.pause_style)
+    # Removed duplicate add_playlist_to_queue method.
+    # The correct version exists later in the class definition.
 
-    def add_playlist_to_queue(self):
+
+    def add_playlist_to_queue(self): # Keep this one
         print(self.playlist['songs'])
         self.queue = self.queue + self.playlist['songs']
         self.refresh_queue()
