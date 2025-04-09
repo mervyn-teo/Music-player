@@ -282,6 +282,10 @@ class MusicPlayer(QMainWindow):
         horizontal_slider.addWidget(self.volume_text)
         horizontal_slider.addWidget(self.volume_slider)
 
+    def handle_player_error(self, error):
+        print(f"QMediaPlayer error: {self.player.errorString()}")
+        self.setWindowTitle(f"Playback error: {self.player.errorString()}")
+
     def mousePressEvent(self, event):
         focused_widget = QApplication.focusWidget()
         if isinstance(focused_widget, QLineEdit):
@@ -311,8 +315,11 @@ class MusicPlayer(QMainWindow):
                 down.setStyleSheet(self.playlist_up_down_style)
                 up.clicked.connect(u)
                 down.clicked.connect(d)
-                up.setVisible(False)
-                down.setVisible(False)
+                # Set initial visibility based on the current state
+                is_visible = self.playlist_shown
+                temp.setVisible(is_visible)
+                up.setVisible(is_visible)
+                down.setVisible(is_visible)
 
                 temp_box.addWidget(up)
                 temp_box.addWidget(down)
@@ -347,18 +354,9 @@ class MusicPlayer(QMainWindow):
         self.volume = self.volume_slider.sliderPosition()
         self.player.setVolume(self.volume)
 
-    def add_yt_playlist(self):
-        youtube_url = self.url_entry.text()
-        youtube_dl_opts = {}
-        with YoutubeDL(youtube_dl_opts) as ydl:
-            info_dict = ydl.extract_info(youtube_url, download=False)
-            print(info_dict)
-            length = len(info_dict['entries'])
-            playlist = []
-            for i in range(length):
-                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
-                playlist.append(temp)
-            return playlist
+    # This function is redundant now that add_to_playlist handles URLs directly
+    # def add_yt_playlist(self):
+    #     ... (removed) ...
 
     def play_from_playlist(self, ID):
         def ret_func():
@@ -573,22 +571,53 @@ class MusicPlayer(QMainWindow):
         self.refresh_queue()
 
     def add_url_to_queue(self):
-        if self.url_entry.text():
-            res = self.get_song_file_name(self.url_entry.text())
-            is_playlist = res[3]
+        url = self.url_entry.text()
+        if not url:
+            return
+
+        self.setWindowTitle("Getting song info...")
+        # Start metadata extraction in background
+        self.meta_thread_queue = QThread() # Use a distinct thread/worker instance
+        self.meta_worker_queue = MetadataWorker(url)
+        self.meta_worker_queue.moveToThread(self.meta_thread_queue)
+        self.meta_thread_queue.started.connect(self.meta_worker_queue.run)
+        self.meta_worker_queue.finished.connect(self.on_metadata_for_queue)
+        self.meta_worker_queue.error.connect(self.on_metadata_error) # Can reuse error handler
+        self.meta_worker_queue.finished.connect(self.meta_thread_queue.quit)
+        self.meta_worker_queue.finished.connect(self.meta_worker_queue.deleteLater)
+        self.meta_thread_queue.finished.connect(self.meta_thread_queue.deleteLater)
+        self.meta_thread_queue.start()
+
+    def on_metadata_for_queue(self, info):
+        try:
+            is_playlist = info.get('_type') == 'playlist'
             if is_playlist:
-                info_dict = res[4]
-                length = len(info_dict['entries'])
+                entries = info.get('entries', [])
                 playlist = []
-                for i in range(length):
-                    temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
-                    playlist.append(temp)
-                self.queue = self.queue + playlist
-                self.refresh_queue()
+                for entry in entries:
+                    playlist.append({
+                        'name': entry.get('fulltitle', 'Unknown Title'),
+                        'ID': entry.get('id', None) # Use 'id' consistently
+                    })
+                    # Filter out entries without an ID
+                playlist = [item for item in playlist if item['ID']]
+                self.queue.extend(playlist)
+                print(f"Added playlist to queue: {len(playlist)} songs")
             else:
-                self.queue.append(
-                    {"name": res[0], "ID": res[1]})
-                self.refresh_queue()
+                video_id = info.get('id', None)
+                song_name = info.get('title', 'Unknown Title')
+                if video_id:
+                    self.queue.append({"name": song_name, "ID": video_id})
+                    print(f"Added to queue: {song_name}")
+                else:
+                    print("Could not add to queue: Missing video ID")
+
+            self.refresh_queue()
+            self.setWindowTitle("YouTube Audio Player") # Reset title
+        except Exception as e:
+            print(f"Error processing metadata for queue: {e}")
+            self.setWindowTitle("Error adding to queue")
+
 
     def update_slider(self):
         duration = self.player.duration()
@@ -634,57 +663,107 @@ class MusicPlayer(QMainWindow):
             self.player.setPosition(int(value))
 
     def add_to_playlist(self):
-        global added_in_playlist
-        self.setWindowTitle("checking...")
-        res = self.get_song_file_name(self.url_entry.text())
-        is_playlist = res[3]
-        info_dict = res[4]
-        if is_playlist:
-            length = len(info_dict['entries'])
-            yt_playlist = []
-            for i in range(length):
-                temp = {'name': info_dict['entries'][i].get('fulltitle', None), 'ID': info_dict['entries'][i].get("display_id", None)}
-                yt_playlist.append(temp)
-            self.playlist["songs"] = self.playlist["songs"] + yt_playlist
-            with open('playlist.json', 'w') as f2:
-                json.dump(self.playlist, f2, indent=2)
-            print(self.playlist)
-            self.refresh_playlist()
-            if self.playing:
-                self.setWindowTitle(f"Now playing: self.queue[0]")
+        url = self.url_entry.text()
+        if not url:
+            print("No URL entered to add to playlist.")
+            return
+
+        self.setWindowTitle("Getting info to add to playlist...")
+        # Start metadata extraction in background
+        self.meta_thread_playlist = QThread() # Use a distinct thread/worker instance
+        self.meta_worker_playlist = MetadataWorker(url)
+        self.meta_worker_playlist.moveToThread(self.meta_thread_playlist)
+        self.meta_thread_playlist.started.connect(self.meta_worker_playlist.run)
+        self.meta_worker_playlist.finished.connect(self.on_metadata_for_playlist)
+        self.meta_worker_playlist.error.connect(self.on_metadata_error) # Can reuse error handler
+        self.meta_worker_playlist.finished.connect(self.meta_thread_playlist.quit)
+        self.meta_worker_playlist.finished.connect(self.meta_worker_playlist.deleteLater)
+        self.meta_thread_playlist.finished.connect(self.meta_thread_playlist.deleteLater)
+        self.meta_thread_playlist.start()
+
+    def on_metadata_for_playlist(self, info):
+        try:
+            added_songs = []
+            is_playlist = info.get('_type') == 'playlist'
+
+            if is_playlist:
+                entries = info.get('entries', [])
+                for entry in entries:
+                    video_id = entry.get('id', None) # Use 'id' consistently
+                    song_name = entry.get('title', 'Unknown Title')
+                    if video_id:
+                         # Avoid duplicates
+                        if not any(song['ID'] == video_id for song in self.playlist['songs']):
+                            added_songs.append({'name': song_name, 'ID': video_id})
+                        else:
+                            print(f"Skipping duplicate (playlist): {song_name}")
+                    else:
+                         print(f"Skipping entry, missing ID: {song_name}")
+
             else:
-                self.setWindowTitle('YouTube Audio Player')
-        else:
-            if self.url_entry is not None:
-                self.setWindowTitle(f"adding {self.song_name} ...")
-                self.playlist["songs"].append({"name": self.song_name, "ID": self.filename})
-                temp = QLabel(f"{self.playlist_box.count() + 1}: {self.song_name}")
-                self.playlist_box.addWidget(temp)
-                temp.setStyleSheet(self.text_style)
-                with open('playlist.json', 'w') as f2:
-                    json.dump(self.playlist, f2, indent=2)
-                if self.playing:
-                    self.setWindowTitle(f"Now playing: {self.song_name}")
+                video_id = info.get('id', None)
+                song_name = info.get('title', 'Unknown Title')
+                if video_id:
+                     # Avoid duplicates
+                    if not any(song['ID'] == video_id for song in self.playlist['songs']):
+                        added_songs.append({'name': song_name, 'ID': video_id})
+                    else:
+                        print(f"Skipping duplicate (single): {song_name}")
                 else:
-                    self.setWindowTitle('YouTube Audio Player')
+                    print("Could not add to playlist: Missing video ID")
+
+            if added_songs:
+                self.playlist["songs"].extend(added_songs)
+                with open('playlist.json', 'w', encoding='utf-8') as f2:
+                    json.dump(self.playlist, f2, indent=2, ensure_ascii=False)
+                print(f"Added {len(added_songs)} song(s) to playlist.json")
+                self.refresh_playlist() # Update the UI
             else:
-                print("nothing for me to add bruh")
+                 print("No new songs added to playlist (duplicates or errors).")
+
+            self.setWindowTitle("YouTube Audio Player") # Reset title
+
+        except Exception as e:
+            print(f"Error processing metadata for playlist: {e}")
+            self.setWindowTitle("Error adding to playlist")
+
 
     def refresh_playlist(self):
+        # Clear existing playlist widgets (skip the label at index 0)
+        while self.playlist_box.count() > 1:
+            item = self.playlist_box.takeAt(1) # Take item at index 1
+            if item is None:
+                continue
+            layout = item.layout()
+            if layout is not None:
+                # Recursively delete widgets within the layout
+                while layout.count():
+                    child = layout.takeAt(0)
+                    if child.widget():
+                        child.widget().deleteLater()
+                # Delete the layout itself
+                del layout
+            elif item.widget() is not None:
+                 item.widget().deleteLater() # Should not happen with current structure, but good practice
 
-        r = self.playlist_box.count()
-        if r > 1:
-            for i in reversed(range(1, r)):
-                temp = self.playlist_box.itemAt(i).layout()
-                self.playlist_box.removeItem(temp)
-        print("here")
-        for i in range(len(self.playlist)):
-            self.init_playlist()
-            if self.playlist_shown:
-                self.show_playlist()
-                self.show_playlist()
-            else:
-                self.show_playlist()
+        # Re-initialize playlist UI based on the current self.playlist data
+        self.init_playlist()
+
+        # Ensure visibility matches the current state
+        is_visible = self.playlist_shown
+        self.playlist_label.setVisible(is_visible) # Make sure label visibility is correct
+        index = self.playlist_box.count()
+        while index > 1: # Iterate through the newly added items
+            my_layout = self.playlist_box.itemAt(index - 1).layout()
+            if my_layout:
+                wid_count = my_layout.count()
+                while wid_count > 0:
+                    my_widget = my_layout.itemAt(wid_count - 1).widget()
+                    if my_widget:
+                        my_widget.setVisible(is_visible)
+                    wid_count -= 1
+            index -= 1
+
 
     def show_playlist(self):
         index = self.playlist_box.count()
@@ -712,6 +791,3 @@ if __name__ == '__main__':
     ex = MusicPlayer()
     ex.show()
     sys.exit(app.exec_())
-    def handle_player_error(self, error):
-        print(f"QMediaPlayer error: {self.player.errorString()}")
-        self.setWindowTitle(f"Playback error: {self.player.errorString()}")
