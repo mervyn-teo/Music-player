@@ -507,31 +507,10 @@ class MusicPlayer(QMainWindow):
              self.next_song_filename = audio_file
 
 
-    def keyPressEvent(self, event):  # keypress detection
-        self.dl_thread = QThread()
-        self.dl_worker = DownloadWorker(video_id)
-        self.dl_worker.moveToThread(self.dl_thread)
-        self.dl_thread.started.connect(self.dl_worker.run)
-        self.dl_worker.finished.connect(self.on_download_finished)
-        self.dl_worker.error.connect(self.on_download_error)
-        self.dl_worker.finished.connect(self.dl_thread.quit)
-        self.dl_worker.finished.connect(self.dl_worker.deleteLater)
-        self.dl_thread.finished.connect(self.dl_thread.deleteLater)
-        self.dl_thread.start()
+    # Removed duplicate keyPressEvent and related download handlers from here.
+    # The correct versions exist earlier in the class definition.
 
-    def on_download_finished(self, video_id):
-        audio_file = os.path.join("./temp", f"{video_id}.mp3")
-        self.play_music(audio_file)
-
-    def on_download_error(self, error_msg):
-        print(f"Download error: {error_msg}")
-        self.setWindowTitle("Error downloading audio")
-
-    def download_only(self, ID):
-        # Use background worker instead
-        self.download_audio_file(ID)
-
-    def keyPressEvent(self, event):  # keypress detection
+    def keyPressEvent(self, event):  # keypress detection (KEEP THIS ONE)
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
             self.play_pause()
         elif event.key() == Qt.Key_Up:
