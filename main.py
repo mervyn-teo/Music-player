@@ -22,6 +22,10 @@ class MusicPlayer(QMainWindow):
                 json.dump({"songs": []}, temp, indent=2)
         self.player = QMediaPlayer()
         self.player.error.connect(self.handle_player_error)
+        # Track the download worker/thread for the song intended for immediate playback
+        self.current_playback_dl_worker = None
+        self.current_playback_dl_thread = None
+        self.playback_download_cancelled = False # Flag to ignore download result if skipped
         self.initUI()
 
     def initUI(self):
@@ -444,6 +448,18 @@ class MusicPlayer(QMainWindow):
         self.dl_worker.finished.connect(self.dl_worker.deleteLater)
         self.dl_thread.finished.connect(self.dl_thread.deleteLater)
 
+        # Store references ONLY if this download is for the song currently at queue[0]
+        if self.queue and self.queue[0]['ID'] == video_id:
+            print(f"Tracking download worker/thread for current playback song: {song_name}")
+            self.current_playback_dl_worker = self.dl_worker
+            self.current_playback_dl_thread = self.dl_thread
+            self.playback_download_cancelled = False # Reset flag for new download
+        else:
+             # Ensure references are clear if this download is for buffering/other purposes
+             # This case might need refinement depending on buffering logic interaction
+             pass # Or explicitly clear if needed: self.current_playback_dl_worker = None etc.
+
+
         self.dl_thread.start()
 
     # Renamed from download_audio_file for clarity
@@ -462,6 +478,29 @@ class MusicPlayer(QMainWindow):
     def on_download_finished(self, video_id, song_name):
         """Handles successful download completion."""
         print(f"Finished download for ID: {video_id}, Name: {song_name}")
+
+        # Check if this download was cancelled (song skipped)
+        if self.playback_download_cancelled and self.current_playback_dl_worker is self.sender():
+            print(f"Ignoring download result for cancelled/skipped song: {song_name}")
+            self.playback_download_cancelled = False # Reset flag
+            # Clear references as this download is now irrelevant for playback
+            self.current_playback_dl_worker = None
+            self.current_playback_dl_thread = None
+            # Optionally clean up the file now
+            # self.cleanup_previous_song_file(video_id)
+            return # Stop processing this download result
+
+        # Check if the queue state changed while downloading (song skipped or queue cleared)
+        if not self.queue or self.queue[0]['ID'] != video_id:
+            print(f"Queue changed during download for {song_name}. Ignoring result.")
+            # Clear references if they point to this worker (though cancellation flag should handle most cases)
+            if self.current_playback_dl_worker is self.sender():
+                self.current_playback_dl_worker = None
+                self.current_playback_dl_thread = None
+            # Optionally clean up the file
+            # self.cleanup_previous_song_file(video_id)
+            return # Stop processing
+
         audio_file = os.path.join("./temp", f"{video_id}.mp3")
 
         if not os.path.exists(audio_file):
@@ -681,6 +720,12 @@ class MusicPlayer(QMainWindow):
             self.slider.setValue(0) # Reset slider
             self.timer.stop()
             print("Playback stopped.")
+
+            # Also clear any active playback download tracking
+            self.current_playback_dl_worker = None
+            self.current_playback_dl_thread = None
+            self.playback_download_cancelled = False # Reset flag
+
             # Clean up the file that was just playing? Optional.
             # self.cleanup_previous_song_file(current_song_id) # Uncomment if desired
 
@@ -793,8 +838,16 @@ class MusicPlayer(QMainWindow):
     def next_song(self):
         """Plays the next song in the queue."""
         print("Next song requested.")
+
+        # Check if a download for the *current* song is active
+        if self.current_playback_dl_thread and self.current_playback_dl_thread.isRunning():
+            print("Skipping song while its download is in progress. Flagging download to be ignored.")
+            self.playback_download_cancelled = True
+            # We don't stop the thread, just ignore its result in on_download_finished
+            # The worker/thread references will be cleared by play_music/play_stop or on_download_finished
+
         if self.player.state() != QMediaPlayer.StoppedState:
-            self.player.stop() # Stop current playback
+            self.player.stop() # Stop current playback (if any)
 
         if len(self.queue) > 1: # Need at least two songs to play the *next* one
             # Get the ID of the song that just finished (or was skipped)
