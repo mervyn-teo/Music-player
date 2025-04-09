@@ -11,7 +11,7 @@ Download and run the [latest release](https://github.com/mervyn-teo/Music-player
 Download dependencies using:
 
 ```
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 and run [main.py](https://github.com/mervyn-teo/Music-player/blob/master/main.py)
