@@ -34,10 +34,12 @@ class DownloadWorker(QObject):
         try:
             ydl_opts = {
                 'outtmpl': os.path.join(self.outdir, '%(id)s.%(ext)s'),
-                'format': 'bestaudio',
+                # More specific format selection with fallbacks
+                'format': 'bestaudio[ext=m4a]/bestaudio/best[ext=mp3]/best',
                 'postprocessors': [{
-                    'key': 'FFmpegVideoConvertor',
-                    'preferedformat': 'mp3'
+                    'key': 'FFmpegExtractAudio', # Use FFmpegExtractAudio for audio extraction/conversion
+                    'preferredcodec': 'mp3',     # Specify the desired audio codec
+                    'preferredquality': '192',   # Optional: specify quality
                 }]
             }
             with YoutubeDL(ydl_opts) as ydl:
